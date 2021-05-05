@@ -53,11 +53,11 @@ class HTTPBearerWithCookie(HTTPBearer):
         return HTTPAuthorizationCredentials(scheme=scheme, credentials=credentials)
 
 
-class JWTPayload(BaseModel):
-    @classmethod
-    def _exp_default_factory(cls, expire_hours: int = 168):
-        return datetime.utcnow() + timedelta(hours=expire_hours)
+def _exp_default_factory(expire_hours: int = 168):
+    return datetime.utcnow() + timedelta(hours=expire_hours)
 
+
+class JWTPayload(BaseModel):
     sub: str
     email: str
     scope: List[str]
