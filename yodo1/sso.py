@@ -1,10 +1,9 @@
 from datetime import datetime, timedelta
+from functools import lru_cache
 from typing import Optional, List
 
 import jwt
 import requests
-from functools import lru_cache
-
 from fastapi import HTTPException, Security, Request
 from fastapi.openapi.models import HTTPBearer as HTTPBearerModel
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -15,18 +14,18 @@ from starlette.status import HTTP_403_FORBIDDEN
 
 class HTTPBearerWithCookie(HTTPBearer):
     def __init__(
-            self,
-            *,
-            bearerFormat: Optional[str] = None,
-            scheme_name: Optional[str] = None,
-            auto_error: bool = True,
+        self,
+        *,
+        bearerFormat: Optional[str] = None,
+        scheme_name: Optional[str] = None,
+        auto_error: bool = True,
     ):
         self.model = HTTPBearerModel(bearerFormat=bearerFormat)
         self.scheme_name = scheme_name or self.__class__.__name__
         self.auto_error = auto_error
 
     async def __call__(
-            self, request: Request
+        self, request: Request
     ) -> Optional[HTTPAuthorizationCredentials]:
         authorization_in_request: str = request.headers.get("Authorization")
         authorization_in_cookie: str = request.cookies.get("Authorization")
@@ -73,16 +72,13 @@ class JWTHelper:
         response = requests.get(url)
         return response.text
 
-    @classmethod
-    def from_sso_server(cls, url: str) -> 'JWTHelper':
-        public_key = cls._fetch_public_key(url=url)
-        helper = JWTHelper()
-        helper.setup_keys(public_key=public_key)
-        return helper
-
     def __init__(self):
         self.public_key = None
         self.private_key = None
+
+    def setup_with_sso_server(self, url: str):
+        public_key = self._fetch_public_key(url=url)
+        self.public_key = public_key
 
     def setup_keys(self,
                    public_key: str,
