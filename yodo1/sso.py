@@ -75,10 +75,12 @@ class JWTHelper:
     def __init__(self):
         self.public_key = None
         self.private_key = None
+        self.scope = None
 
-    def setup_with_sso_server(self, url: str):
+    def setup_with_sso_server(self, url: str, scope: Optional[str] = None):
         public_key = self._fetch_public_key(url=url)
         self.public_key = public_key
+        self.scope = scope
 
     def setup_keys(self,
                    public_key: str,
@@ -117,6 +119,9 @@ class JWTHelper:
                         ) -> JWTPayload:
         token = credentials.credentials
         payload = self.decode_token(token)
+        if self.scope:
+            if self.scope not in payload.scope:
+                raise HTTPException(status_code=401, detail='Invalid scope')
         return payload
 
 
