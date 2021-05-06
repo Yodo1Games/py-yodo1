@@ -1,6 +1,7 @@
 # Data
 pydantic>=1.8.1,<2.0
 sqlalchemy>=1.4.13,<2.0
+pymysql>=1.0.2,<2
 
 # RabbitMQ
 aio_pika>=6.8.0,<7
