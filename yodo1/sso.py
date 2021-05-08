@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
-from functools import lru_cache
 from typing import Optional, List
 
 import jwt
 import requests
+from cachetools import cached, TTLCache
 from fastapi import HTTPException, Security, Request
 from fastapi.openapi.models import HTTPBearer as HTTPBearerModel
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -67,7 +67,7 @@ class JWTPayload(BaseModel):
 
 class JWTHelper:
     @classmethod
-    @lru_cache
+    @cached(cache=TTLCache(maxsize=1024, ttl=1800))
     def _fetch_public_key(cls, url: str):
         response = requests.get(url)
         return response.text
@@ -75,11 +75,12 @@ class JWTHelper:
     def __init__(self):
         self.public_key = None
         self.private_key = None
+        self.public_key_url: Optional[str] = None
         self.scope = None
 
     def setup_with_sso_server(self, url: str, scope: Optional[str] = None):
-        public_key = self._fetch_public_key(url=url)
-        self.public_key = public_key
+        self.public_key = self._fetch_public_key(url=url)
+        self.public_key_url = url
         self.scope = scope
 
     def setup_keys(self,
@@ -106,6 +107,8 @@ class JWTHelper:
         return token_str
 
     def decode_token(self, token: str) -> JWTPayload:
+        if self.public_key_url:
+            self.public_key = self._fetch_public_key(url=self.public_key_url)
         try:
             payload = jwt.decode(token, self.public_key, algorithms=['RS256'])
             return JWTPayload(**payload)
