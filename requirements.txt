@@ -19,3 +19,6 @@ requests>=2.25.1,<3
 # Logger
 pretty_errors>=1.2.20,<2
 colorlog>=5.0.1,<6
+
+# Cache
+cachetools>=4.2.2,<5
