@@ -34,7 +34,12 @@ from yodo1.sso import JWTHelper, JWTPayload
 auth = JWTHelper()
 
 # Define helper class
+# This is to add custom operation after get user info, like setup APM context
+# https://www.elastic.co/guide/en/apm/agent/python/master/api.html#api-set-user-context
 def get_current_user_dict(payload: JWTPayload = Depends(auth.current_payload)) -> Dict:
+  elasticapm.set_user_context(username=payload.name,
+                              email=payload.email,
+                              user_id=payload.sub)
   return {
     'sub': payload.sub,
     'email': payload.email,
@@ -159,4 +164,49 @@ class OutputModelSchema(BaseSchema):
 class OutputModelWithDateSchema(BaseDateSchema):
   id: int
   title: str
+```
+
+
+## Rabbit MQ
+
+### How to use
+
+```python
+import json
+import aio_pika
+from yodo1.aio_pika import AsyncRabbit
+
+# create a `AsyncRabbit` instance with configs.
+aio_rabbit = AsyncRabbit(host=conf.MQ_HOST,
+                         port=conf.MQ_PORT,
+                         login=conf.MQ_USER,
+                         password=conf.MQ_PASSWORD,
+                         virtualhost='/' + conf.env)
+
+
+# Define a callback function
+async def my_callback_func(message: aio_pika.IncomingMessage) -> None:
+  try:
+    body = json.loads(message.body)
+    event = body.get('event', None)
+    if event == 'target_event':
+      # Handle it and ack
+      message.ack()
+    else:
+      # if failed to handle it nack()
+      message.nack()
+  except Exception as e:
+    # if exception to handle it nack()
+    message.nack()
+  finally:
+    # sleep 0.1 after nack/ack last message, ugly patch before having the x-death logic.
+    time.sleep(0.1)
+
+@app.on_event("startup")
+async def startup_event() -> None:
+  # Register the callback
+  await aio_rabbit.register_callback(exchange_name="<cool-exchange>",
+                                     queue_name="<cool-queue-name>",
+                                     callback=my_callback_func)
+
 ```
