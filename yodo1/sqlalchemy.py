@@ -18,16 +18,12 @@ def _compile_create_table(element: Any, compiler: Any, **kwargs: Dict) -> str:
     Change the table order, put created_at and updated_at at last.
     Put 3 columns from base model class (is_deleted, created_at, updated_at) at the end of the table.
     """
-    element.columns = element.columns[3:] + element.columns[:3]
+    element.columns = element.columns[2:] + element.columns[:2]
     return compiler.visit_create_table(element)
 
 
 class BaseDBModel(Base):
     __abstract__ = True
-
-    is_deleted = Column(
-        BOOLEAN, nullable=False, default=False, comment="Whether the model is deleted"
-    )
 
     created_at = Column(DateTime,
                         default=datetime.datetime.utcnow,
