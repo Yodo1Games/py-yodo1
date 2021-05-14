@@ -4,4 +4,4 @@ set -e
 set -x
 
 export PYTHONPATH=`pwd`
-pytest --cov=api --cov-report term tests/
+pytest --cov=yodo1 --cov-report term tests/

@@ -1,7 +1,7 @@
 import datetime
 from typing import Dict, Any, List, TypeVar, Type, Generator
 
-from sqlalchemy import Column, DateTime, BOOLEAN
+from sqlalchemy import Column, DateTime
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
@@ -9,7 +9,7 @@ from sqlalchemy.schema import CreateTable
 from sqlalchemy.sql import func
 
 T = TypeVar("T")
-Base = declarative_base()
+Base = declarative_base()  # type: ignore
 
 
 @compiles(CreateTable)
@@ -22,7 +22,7 @@ def _compile_create_table(element: Any, compiler: Any, **kwargs: Dict) -> str:
     return compiler.visit_create_table(element)
 
 
-class BaseDBModel(Base):
+class BaseDBModel(Base):  # type: ignore
     __abstract__ = True
 
     created_at = Column(DateTime,

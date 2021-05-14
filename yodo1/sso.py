@@ -54,7 +54,7 @@ class HTTPBearerWithCookie(HTTPBearer):
         return HTTPAuthorizationCredentials(scheme=scheme, credentials=credentials)
 
 
-def _exp_default_factory(expire_hours: int = 168):
+def _exp_default_factory(expire_hours: int = 168) -> datetime:
     return datetime.utcnow() + timedelta(hours=expire_hours)
 
 
@@ -68,36 +68,35 @@ class JWTPayload(BaseModel):
 
 
 class JWTHelper:
-    @classmethod
+    def __init__(self) -> None:
+        self.public_key: Optional[str] = None
+        self.private_key: Optional[str] = None
+        self.public_key_url: Optional[str] = None
+        self.scope: Optional[str] = None
+
     @cached(cache=TTLCache(maxsize=1024, ttl=1800))
     def _fetch_public_key(self, url: str) -> str:
         try:
             response = requests.get(url)
+            print(response.text)
             assert response.text.startswith('-----BEGIN PUBLIC KEY-----')
             self.public_key = response.text
-        except Exception as e:
+        except Exception:  # flake8: noqa
             logging.error("Update public key from sso server failed.")
-            print(f"Fuked {e}")
 
         if self.public_key is None:
             raise ValueError("No initial public key exists")
 
         return self.public_key
 
-    def __init__(self):
-        self.public_key = None
-        self.private_key = None
-        self.public_key_url: Optional[str] = None
-        self.scope = None
-
-    def setup_with_sso_server(self, url: str, scope: Optional[str] = None):
+    def setup_with_sso_server(self, url: str, scope: Optional[str] = None) -> None:
         self.public_key = self._fetch_public_key(url=url)
         self.public_key_url = url
         self.scope = scope
 
     def setup_keys(self,
                    public_key: str,
-                   private_key: Optional[str] = None):
+                   private_key: Optional[str] = None) -> None:
         self.public_key = public_key
         self.private_key = private_key
 
