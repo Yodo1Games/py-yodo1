@@ -4,7 +4,6 @@ from typing import Optional, List
 
 import jwt
 import requests
-from cachetools import cached, TTLCache
 from fastapi import HTTPException, Security, Request
 from fastapi.openapi.models import HTTPBearer as HTTPBearerModel
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -70,16 +69,19 @@ class JWTPayload(BaseModel):
 class JWTHelper:
     @classmethod
     @cached(cache=TTLCache(maxsize=1024, ttl=1800))
-    def _fetch_public_key(self, url: str):
+    def _fetch_public_key(self, url: str) -> str:
         try:
             response = requests.get(url)
             assert response.text.startswith('-----BEGIN PUBLIC KEY-----')
             self.public_key = response.text
-        except:
+        except Exception as e:
             logging.error("Update public key from sso server failed.")
+            print(f"Fuked {e}")
 
         if self.public_key is None:
             raise ValueError("No initial public key exists")
+
+        return self.public_key
 
     def __init__(self):
         self.public_key = None
