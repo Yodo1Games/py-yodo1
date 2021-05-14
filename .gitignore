@@ -133,3 +133,4 @@ dmypy.json
 .idea
 
 scripts/env_*
+*.sqlite

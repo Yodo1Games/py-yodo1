@@ -1,12 +1,11 @@
-from typing import Dict
+from typing import Dict, List
 
-import requests
 from fastapi import FastAPI, Depends
-from fastapi.responses import PlainTextResponse
-from fastapi.requests import Request
+from sqlalchemy.orm import Session
 
-from example_api.base import auth, get_current_user_dict
+from example_api.base import auth, get_current_user_dict, db
 from example_api.keys import PUBLIC_KEY_URL
+from example_api.model import ItemModel, ItemOutSchema, ItemOutDateSchema
 from yodo1.logger import logger
 
 description = """
@@ -35,3 +34,13 @@ async def health_check() -> Dict:
 @app.get("/secret_data", response_model=Dict)
 async def health_check(user: Dict = Depends(get_current_user_dict)) -> Dict:
     return {'secret': 'true', 'user': user}
+
+
+@app.get('items', response_model=List[ItemOutSchema])
+async def get_items(session: Session = Depends(db.get_session)):
+    return session.query(ItemModel).all()
+
+
+@app.get('items_with_date', response_model=List[ItemOutDateSchema])
+async def get_items(session: Session = Depends(db.get_session)):
+    return session.query(ItemModel).all()
