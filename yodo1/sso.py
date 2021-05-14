@@ -78,7 +78,6 @@ class JWTHelper:
     def _fetch_public_key(self, url: str) -> str:
         try:
             response = requests.get(url)
-            print(response.text)
             assert response.text.startswith('-----BEGIN PUBLIC KEY-----')
             self.public_key = response.text
         except Exception:  # flake8: noqa
