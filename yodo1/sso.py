@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from typing import Optional, List
 
@@ -68,9 +69,16 @@ class JWTPayload(BaseModel):
 class JWTHelper:
     @classmethod
     @cached(cache=TTLCache(maxsize=1024, ttl=1800))
-    def _fetch_public_key(cls, url: str):
-        response = requests.get(url)
-        return response.text
+    def _fetch_public_key(self, url: str):
+        try:
+            response = requests.get(url)
+            assert response.text.startswith('-----BEGIN PUBLIC KEY-----')
+            self.public_key = response.text
+        except:
+            logging.error("Update public key from sso server failed.")
+
+        if self.public_key is None:
+            raise ValueError("No initial public key exists")
 
     def __init__(self):
         self.public_key = None
