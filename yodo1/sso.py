@@ -4,6 +4,7 @@ from typing import Optional, List
 
 import jwt
 import requests
+from cachetools import cached, TTLCache
 from fastapi import HTTPException, Security, Request
 from fastapi.openapi.models import HTTPBearer as HTTPBearerModel
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
