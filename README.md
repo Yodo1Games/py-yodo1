@@ -34,7 +34,12 @@ from yodo1.sso import JWTHelper, JWTPayload
 auth = JWTHelper()
 
 # Define helper class
+# This is to add custom operation after get user info, like setup APM context
+# https://www.elastic.co/guide/en/apm/agent/python/master/api.html#api-set-user-context
 def get_current_user_dict(payload: JWTPayload = Depends(auth.current_payload)) -> Dict:
+  elasticapm.set_user_context(username=payload.name,
+                              email=payload.email,
+                              user_id=payload.sub)
   return {
     'sub': payload.sub,
     'email': payload.email,

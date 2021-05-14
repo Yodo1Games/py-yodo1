@@ -61,6 +61,7 @@ def _exp_default_factory(expire_hours: int = 168):
 class JWTPayload(BaseModel):
     sub: str
     email: str
+    name: str
     scope: List[str]
     exp: datetime = Field(default_factory=_exp_default_factory)
     iat: datetime = Field(default_factory=datetime.utcnow)

@@ -1,6 +1,6 @@
 # Data
 pydantic>=1.8.1,<2.0
-sqlalchemy>=1.4.13,<2.0
+sqlalchemy>=1.3.23,<2.0
 pymysql>=1.0.2,<2
 
 # RabbitMQ
