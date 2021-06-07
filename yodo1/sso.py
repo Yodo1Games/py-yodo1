@@ -11,6 +11,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
 from pydantic import BaseModel, Field
 from starlette.status import HTTP_403_FORBIDDEN
+import elasticapm
 
 
 class HTTPBearerWithCookie(HTTPBearer):
@@ -135,6 +136,7 @@ class JWTHelper:
         if self.scope:
             if self.scope not in payload.scope:
                 raise HTTPException(status_code=401, detail='Invalid scope')
+        elasticapm.set_user_context(username=payload.name, email=payload.email, user_id=payload.sub)
         return payload
 
 
