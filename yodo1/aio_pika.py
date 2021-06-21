@@ -3,6 +3,7 @@ import os
 import random
 import socket
 from typing import Callable, Optional
+from urllib.parse import quote
 
 import aio_pika
 import aiormq
@@ -11,20 +12,40 @@ from aio_pika import Channel, Connection
 
 class AsyncRabbit:
 
+    @staticmethod
+    def get_uri(host: str,
+                port: int,
+                login: str,
+                password: str,
+                virtualhost: str) -> str:
+        return f"amqps://{login}:{password}@{host}:{port}/{quote(virtualhost, safe='')}"
+
     def __init__(self,
-                 host: str,
-                 port: int,
-                 login: str,
-                 password: str,
+                 url: Optional[str] = None,
+                 *,
+                 host: Optional[str] = None,
+                 port: Optional[int] = None,
+                 login: Optional[str] = None,
+                 password: Optional[str] = None,
                  consumer_tag: str = None,
                  virtualhost: str = '/',
                  ssl: bool = True) -> None:
+        self.url = url
         self.host = host
         self.port = port
         self.login = login
         self.password = password
         self.virtualhost = virtualhost
         self.ssl = ssl
+
+        if self.url is None:
+            self.url = AsyncRabbit.get_uri(
+                host=self.host,
+                port=self.port,
+                login=self.login,
+                password=self.password,
+                virtualhost=self.virtualhost
+            )
 
         if consumer_tag is None:
             consumer_tag = f'{socket.gethostname()}[{os.getpid()}]'
@@ -36,13 +57,7 @@ class AsyncRabbit:
         self._channel: Channel = None
 
     async def connect(self) -> None:
-        self._connection: Connection = await aio_pika.connect_robust(  # type: ignore
-            host=self.host,
-            port=self.port,
-            login=self.login,
-            password=self.password,
-            virtualhost=self.virtualhost,
-            ssl=self.ssl)
+        self._connection: Connection = await aio_pika.connect_robust(url=self.url)
         self._channel = await self._connection.channel()  # type: ignore
         await self._channel.set_qos(self._qos)
         logging.info('Connected to Rabbit MQ')
