@@ -57,7 +57,7 @@ class AsyncRabbit:
         self._channel: Channel = None
 
     async def connect(self) -> None:
-        self._connection: Connection = await aio_pika.connect_robust(url=self.url)
+        self._connection: Connection = await aio_pika.connect_robust(url=self.url)  # type: ignore
         self._channel = await self._connection.channel()  # type: ignore
         await self._channel.set_qos(self._qos)
         logging.info('Connected to Rabbit MQ')
