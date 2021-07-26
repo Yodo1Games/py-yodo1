@@ -10,7 +10,7 @@ from fastapi.openapi.models import HTTPBearer as HTTPBearerModel
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
 from pydantic import BaseModel, Field
-from starlette.status import HTTP_403_FORBIDDEN
+from starlette.status import HTTP_401_UNAUTHORIZED
 import elasticapm
 
 
@@ -40,14 +40,14 @@ class HTTPBearerWithCookie(HTTPBearer):
         if not (scheme and credentials):
             if self.auto_error:
                 raise HTTPException(
-                    status_code=HTTP_403_FORBIDDEN, detail="Not authenticated"
+                    status_code=HTTP_401_UNAUTHORIZED, detail="Not authenticated"
                 )
             else:
                 return None
         if scheme.lower() != "bearer":
             if self.auto_error:
                 raise HTTPException(
-                    status_code=HTTP_403_FORBIDDEN,
+                    status_code=HTTP_401_UNAUTHORIZED,
                     detail="Invalid authentication credentials",
                 )
             else:
