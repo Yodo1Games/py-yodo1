@@ -29,7 +29,7 @@ def test_login_with_keys(client: TestClient) -> None:
 
     # Test No Token
     r = client.get("/secret_data")
-    assert r.status_code == 403
+    assert r.status_code == 401
 
     # Test Fake Token
     r = client.get("/secret_data", headers={
