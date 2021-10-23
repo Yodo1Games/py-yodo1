@@ -4,7 +4,7 @@ Includes
 
 - sso auth
 - sqlalchemy
-- Rabbit MQ (aio_oika)
+- Rabbit MQ (aio_pika)
 - pydantic
 
 ## Install

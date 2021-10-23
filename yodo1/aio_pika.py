@@ -114,6 +114,12 @@ class AsyncRabbit:
         await self._channel.close()
         await self._connection.close()
 
+    async def cancel(self) -> None:
+        """
+        Cancel consumer receive new message
+        """
+        await self._channel.channel.basic_cancel(self._consumer_tag)
+
 
 __all__ = [
     'AsyncRabbit'
