@@ -29,10 +29,10 @@ def init_logger(level: str = None, style: str = 'simple') -> None:
 
 def get_color_formatter(style: str = 'simple') -> ColoredFormatter:
     if style == 'simple':
-        color_format = "%(log_color)s%(asctime)s [%(levelname)s] " \
+        color_format = "%(log_color)s[%(levelname)s] " \
                        "%(message)s"
     else:
-        color_format = "%(log_color)s[%(process)-2s] %(asctime)s [%(levelname)s] " \
+        color_format = "%(log_color)s[%(process)-2s] [%(levelname)s] " \
                        "%(name)s:%(filename)s:%(lineno)d - %(message)s"
 
     color_formatter = ColoredFormatter(color_format,
