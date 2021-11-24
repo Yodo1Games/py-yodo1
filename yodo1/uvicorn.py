@@ -17,5 +17,5 @@ def patch_uvicorn_logger() -> None:
             uvicorn_logger.removeHandler(h)
         uvicorn_logger.addFilter(HealthCheckFilter())
         handler = logging.StreamHandler()
-        handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+        handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
         uvicorn_logger.addHandler(handler)
