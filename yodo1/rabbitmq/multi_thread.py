@@ -87,21 +87,21 @@ class MultiThreadConsumer:
                                                  handler_function=handler_function)
         self.channel.basic_consume(queue_name, queue_thread_handler, consumer_tag=consumer_tag)
 
-    def start_consuming(self):
+    def start_consuming(self) -> None:
         """
         Start consuming, will block the main thread
         """
         logger.info("Start consuming.")
         self.channel.start_consuming()
 
-    def stop_consuming(self):
+    def stop_consuming(self) -> None:
         """
         Stop consuming
         """
         self.channel.stop_consuming()
         logger.info("Stop consuming.")
 
-    def close(self):
+    def close(self) -> None:
         """
         Close the consumer and handle remaining received messages.
         """

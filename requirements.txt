@@ -25,3 +25,10 @@ colorlog>=5.0.1,<6
 
 # Cache
 cachetools>=4.2.2,<5
+
+# Types
+types-aiofiles
+types-cachetools
+types-orjson
+types-requests
+types-ujson
