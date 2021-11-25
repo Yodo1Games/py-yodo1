@@ -84,7 +84,8 @@ class MultiThreadConsumer:
             consumer_tag = f'{socket.gethostname()}[{os.getpid()}]-{random_id}'
 
         queue_thread_handler = functools.partial(self._handle_message,
-                                                 handler_function=handler_function)
+                                                 handler_function=handler_function,
+                                                 _queue_name=queue_name)
         self.channel.basic_consume(queue_name, queue_thread_handler, consumer_tag=consumer_tag)
 
     def start_consuming(self) -> None:
@@ -113,18 +114,19 @@ class MultiThreadConsumer:
     def _handle_ack(self,
                     future: Future,
                     channel: Channel,
-                    method_frame: pika.spec.Basic.Deliver) -> None:
+                    method_frame: pika.spec.Basic.Deliver,
+                    _queue_name: str) -> None:
         result = future.result()
         if not isinstance(result, CallbackResult):
             raise ValueError("Consumer's callback function must return a CallbackResult object.")
         if result.action == MQAction.ack:
             channel.basic_ack(delivery_tag=method_frame.delivery_tag)
-            logger.debug(f"ACK: queue: {method_frame.routing_key}, "
+            logger.debug(f"ack message on Queue<{_queue_name}> with "
                          f"delivery_tag: {method_frame.delivery_tag}")
         else:
             channel.basic_nack(delivery_tag=method_frame.delivery_tag, requeue=False)
 
-            logger.debug(f"NACK:, queue: {method_frame.routing_key}, "
+            logger.debug(f"nack message on Queue<{_queue_name}> with "
                          f"delivery_tag: {method_frame.delivery_tag}")
 
     def _handle_message(
@@ -133,7 +135,8 @@ class MultiThreadConsumer:
         method_frame: pika.spec.Basic.Deliver,
         header_frame: pika.spec.BasicProperties,
         message_body: bytes,
-        handler_function: Callable
+        handler_function: Callable,
+        _queue_name: str
     ) -> None:
         future = self.thread_pool.submit(handler_function,
                                          method_frame=method_frame,
@@ -144,7 +147,8 @@ class MultiThreadConsumer:
         handle_ack_callback = functools.partial(self._handle_ack,
                                                 future=future,
                                                 channel=channel,
-                                                method_frame=method_frame)
+                                                method_frame=method_frame,
+                                                _queue_name=_queue_name)
         future.add_done_callback(lambda x: self.connection.add_callback_threadsafe(handle_ack_callback))
 
 
