@@ -8,6 +8,7 @@ elastic-apm
 # RabbitMQ
 aio_pika>=6.8.0,<7
 aiormq>=3.3.1,<4
+pika>=1.2.0,<1.3
 
 # FastAPI
 fastapi>=0.63.0,<1
@@ -24,3 +25,10 @@ colorlog>=5.0.1,<6
 
 # Cache
 cachetools>=4.2.2,<5
+
+# Types
+types-aiofiles
+types-cachetools
+types-orjson
+types-requests
+types-ujson
