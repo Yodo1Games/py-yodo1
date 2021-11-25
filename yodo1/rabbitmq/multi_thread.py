@@ -51,7 +51,6 @@ class MultiThreadConsumer:
                  qos: int = 10,
                  max_worker: int = 10) -> None:
         """
-        Demo callback function
         :param uri: MQ URI
         :param qos: qos
         :param max_worker: thread max worker, if you want to process MQ in single thread, set it to 1.
