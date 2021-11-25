@@ -86,7 +86,7 @@ def change_default_log_levels() -> None:
 
 init_logger(style='simple')
 change_default_log_levels()
-logger = logging.getLogger('eva')
+logger = logging.getLogger('app')
 
 if __name__ == "__main__":
     logging.info('info')
