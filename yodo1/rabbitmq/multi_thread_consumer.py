@@ -132,7 +132,7 @@ class MultiThreadConsumer:
 if __name__ == '__main__':
     consumer = MultiThreadConsumer(uri="")
 
-    APP_QUEUE_NAME = f"queue-a"
+    APP_QUEUE_NAME = "queue-a"
     consumer.setup_queue_consumer(queue_name=APP_QUEUE_NAME,
                                   exchange_name="exchange-a",
                                   handler_function=demo_callback)
