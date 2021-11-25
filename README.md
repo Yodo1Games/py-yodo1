@@ -174,16 +174,18 @@ class OutputModelWithDateSchema(BaseDateSchema):
 ```python3
 import logging
 import random
-
+import time
 import pika
-from yodo1.rabbitmq import MultiThreadConsumer
+from yodo1.rabbitmq.multi_thread import MultiThreadConsumer, MQAction, CallbackResult
 
 # We can change pika log level to reduce logs.
 logging.getLogger("pika").setLevel(logging.INFO)
+logging.basicConfig(level='DEBUG')
+
 
 def demo_callback(method_frame: pika.spec.Basic.Deliver,
                   header_frame: pika.spec.BasicProperties,
-                  message_body: bytes) -> bool:
+                  message_body: bytes) -> CallbackResult:
     """
     Demo callback function
     :param method_frame: method_frame from MQ Message
@@ -191,22 +193,23 @@ def demo_callback(method_frame: pika.spec.Basic.Deliver,
     :param message_body: MQ Message body
     :return: whether should ack
     """
-    logging.info(f"Received Queue: {method_frame.routing_key}, delivery_tag: {method_frame.delivery_tag}")
+    logging.info(f"Received message in Queue: {method_frame.routing_key}, delivery_tag: {method_frame.delivery_tag}")
+    time.sleep(30)
     if random.random() > 0.5:
-      # Failed to process, should nack with `requeue=False`
-      return False
+        # Failed to process, should nack with `requeue=False`
+        return CallbackResult(MQAction.ack)
     else:
-      # Process success, should ack
-      return True
+        # Process success, should ack
+        return CallbackResult(MQAction.nack)
 
 consumer = MultiThreadConsumer(uri="amqps://xxxx")
-consumer.setup_queue_consumer("demo-queue",
+consumer.setup_queue_consumer("test.consumer.a.debug",
                               handler_function=demo_callback)
 
 try:
     consumer.start_consuming()
 except KeyboardInterrupt:
-    consumer.start_consuming()
+    consumer.stop_consuming()
 
 consumer.close()
 ```

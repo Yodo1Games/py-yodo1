@@ -1,3 +1,4 @@
+import enum
 import functools
 import logging
 import os
@@ -10,10 +11,26 @@ from typing import Callable
 import pika
 from pika.channel import Channel
 
+logger = logging.getLogger('yodo1.rabbitmq')
+
+
+class MQAction(enum.Enum):
+    ack = 'ack'
+    nack = 'nack'
+
+
+class CallbackResult:
+    def __init__(self,
+                 action: MQAction,
+                 *,
+                 requeue: bool = False):
+        self.action = action
+        self.requeue = requeue
+
 
 def demo_callback(method_frame: pika.spec.Basic.Deliver,
                   header_frame: pika.spec.BasicProperties,
-                  message_body: bytes) -> bool:
+                  message_body: bytes) -> CallbackResult:
     """
     Sample callback function
     :param method_frame: method_frame from MQ Message
@@ -21,7 +38,10 @@ def demo_callback(method_frame: pika.spec.Basic.Deliver,
     :param message_body: MQ Message body
     :return: whether should ack
     """
-    return random.random() > 0.5
+    if random.random() > 0.8:
+        return CallbackResult(MQAction.ack)
+    else:
+        return CallbackResult(MQAction.nack)
 
 
 class MultiThreadConsumer:
@@ -72,7 +92,7 @@ class MultiThreadConsumer:
         """
         Start consuming, will block the main thread
         """
-        logging.info("Start consuming.")
+        logger.info("Start consuming.")
         self.channel.start_consuming()
 
     def stop_consuming(self):
@@ -80,32 +100,32 @@ class MultiThreadConsumer:
         Stop consuming
         """
         self.channel.stop_consuming()
-        logging.info("Stop consuming.")
+        logger.info("Stop consuming.")
 
     def close(self):
         """
         Close the consumer and handle remaining received messages.
         """
-        logging.info("Consumer Closing... Please wait until all messages consumed.")
+        logger.info("Consumer Closing... Please wait until all messages consumed.")
         self.thread_pool.shutdown(wait=True)
         self.connection.close()
-        logging.info("Consumer Closed.")
+        logger.info("Consumer Closed.")
 
     def _handle_ack(self,
                     future: Future,
                     channel: Channel,
                     method_frame: pika.spec.Basic.Deliver) -> None:
-        if future.result():
+        result = future.result()
+        if not isinstance(result, CallbackResult):
+            raise ValueError("Consumer's callback function must return a CallbackResult object.")
+        if result.action == MQAction.ack:
             channel.basic_ack(delivery_tag=method_frame.delivery_tag)
-
-            logging.info(f"[{os.getpid()}] ACK: "
-                         f"queue: {method_frame.routing_key}, "
+            logger.debug(f"ACK: queue: {method_frame.routing_key}, "
                          f"delivery_tag: {method_frame.delivery_tag}")
         else:
             channel.basic_nack(delivery_tag=method_frame.delivery_tag, requeue=False)
 
-            logging.info(f"[{os.getpid()}] NACK:, "
-                         f"queue: {method_frame.routing_key}, "
+            logger.debug(f"NACK:, queue: {method_frame.routing_key}, "
                          f"delivery_tag: {method_frame.delivery_tag}")
 
     def _handle_message(
