@@ -169,7 +169,50 @@ class OutputModelWithDateSchema(BaseDateSchema):
 
 ## Rabbit MQ
 
-### How to use
+### How to use Consumer
+
+```python3
+import logging
+import random
+
+import pika
+from yodo1.rabbitmq import MultiThreadConsumer
+
+# We can change pika log level to reduce logs.
+logging.getLogger("pika").setLevel(logging.INFO)
+
+def demo_callback(method_frame: pika.spec.Basic.Deliver,
+                  header_frame: pika.spec.BasicProperties,
+                  message_body: bytes) -> bool:
+    """
+    Demo callback function
+    :param method_frame: method_frame from MQ Message
+    :param header_frame: header_frame from MQ Message
+    :param message_body: MQ Message body
+    :return: whether should ack
+    """
+    logging.info(f"Received Queue: {method_frame.routing_key}, delivery_tag: {method_frame.delivery_tag}")
+    if random.random() > 0.5:
+      # Failed to process, should nack with `requeue=False`
+      return False
+    else:
+      # Process success, should ack
+      return True
+
+consumer = MultiThreadConsumer(uri="amqps://xxxx")
+consumer.setup_queue_consumer("demo-queue",
+                              handler_function=demo_callback)
+
+try:
+    consumer.start_consuming()
+except KeyboardInterrupt:
+    consumer.start_consuming()
+
+consumer.close()
+```
+
+
+`AsyncRabbit` is Deprecated due to stability. Please use `yodo1.rabbitmq.MultiThreadConsumerl`
 
 ```python
 import json
@@ -208,5 +251,4 @@ async def startup_event() -> None:
   await aio_rabbit.register_callback(exchange_name="<cool-exchange>",
                                      queue_name="<cool-queue-name>",
                                      callback=my_callback_func)
-
 ```
