@@ -12,7 +12,7 @@ class ProgressBar:
         self.step = step
         self.desc = desc
 
-    def update(self, n=1) -> None:
+    def update(self, n: int = 1) -> None:
         self.index += n
 
         if self.index % self.step == 0 or self.index == self.total:
@@ -28,6 +28,7 @@ class ProgressBar:
 
 if __name__ == '__main__':
     import logging
+
     logging.basicConfig(level='DEBUG')
     p = ProgressBar(total=100, desc="Hacking ...", step=12)
 
