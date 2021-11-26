@@ -255,3 +255,33 @@ async def startup_event() -> None:
                                      queue_name="<cool-queue-name>",
                                      callback=my_callback_func)
 ```
+
+
+## Progress Bar
+
+A simple progress bar can display properly on k8s and Grafana.
+
+```python
+import logging
+from yodo1.progress import ProgressBar
+
+logging.basicConfig(level='DEBUG')
+
+p = ProgressBar(total=100, desc="Hacking ...", step=5)
+
+for i in range(100):
+    p.update()
+```
+
+Use it with ThreadPoolExecutor.
+
+```python
+progress = ProgressBar(total=1000, desc="Processing... ")
+
+with ThreadPoolExecutor(max_workers=20) as executor:
+    for index, row in df.iterrows():
+        future = executor.submit(do_something
+                                 id=row.id)
+        # Update progress bar when the job done
+        future.add_done_callback(lambda x: progress.update())
+```

@@ -24,3 +24,12 @@ class ProgressBar:
             text = f"{progress:<8s}|" + '>' * fill_count + ' ' * (ProgressBar.WIDTH - fill_count) + "| " + f"{self.index}/{self.total} "
             text += self.desc
             logger.info(text)
+
+
+if __name__ == '__main__':
+    import logging
+    logging.basicConfig(level='DEBUG')
+    p = ProgressBar(total=100, desc="Hacking ...", step=5)
+
+    for i in range(100):
+        p.update()
