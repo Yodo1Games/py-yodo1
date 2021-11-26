@@ -9,8 +9,8 @@ with codecs.open('requirements.txt', 'r', 'utf8') as reader:
     install_requires = list(map(lambda x: x.strip(), reader.readlines()))
 
 setuptools.setup(
-    name="yodo1",
-    version="0.1.3",
+    name="yodo1-toolkit",
+    version="0.2.0",
     author="Eliyar Eziz",
     author_email="eliyar@yodo1.com",
     description="A Yodo1 Python Toolbox",
