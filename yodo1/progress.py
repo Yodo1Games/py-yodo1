@@ -21,6 +21,6 @@ class ProgressBar:
                 fill_count = ProgressBar.WIDTH
 
             progress = f" {100 * self.index / self.total:.1f}%"
-            text = f"{progress:<8s}|" + '>' * fill_count + ' ' * (ProgressBar.WIDTH - fill_count) + "| "
+            text = f"{progress:<8s}|" + '>' * fill_count + ' ' * (ProgressBar.WIDTH - fill_count) + "| " + f"{self.step}/{self.total} "
             text += self.desc
             logger.info(text)
