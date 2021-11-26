@@ -15,7 +15,7 @@ class ProgressBar:
     def update(self, n=1) -> None:
         self.index += n
 
-        if self.index % self.step == 0:
+        if self.index % self.step == 0 or self.index == self.total:
             fill_count = int(ProgressBar.WIDTH * self.index / self.total)
             if fill_count > ProgressBar.WIDTH:
                 fill_count = ProgressBar.WIDTH
@@ -29,7 +29,7 @@ class ProgressBar:
 if __name__ == '__main__':
     import logging
     logging.basicConfig(level='DEBUG')
-    p = ProgressBar(total=100, desc="Hacking ...", step=5)
+    p = ProgressBar(total=100, desc="Hacking ...", step=12)
 
     for i in range(100):
         p.update()
