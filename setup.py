@@ -10,13 +10,13 @@ with codecs.open('requirements.txt', 'r', 'utf8') as reader:
 
 setuptools.setup(
     name="yodo1-toolkit",
-    version="0.2.0",
+    version="0.2.1",
     author="Eliyar Eziz",
     author_email="eliyar@yodo1.com",
     description="A Yodo1 Python Toolbox",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="git@github.com:Yodo1Games/py-yodo1.git",
+    url="https://github.com/Yodo1Games/py-yodo1",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

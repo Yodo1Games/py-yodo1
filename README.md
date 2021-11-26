@@ -9,13 +9,8 @@ Includes
 
 ## Install
 
-Add this line to `requirements.txt`
-```text
-# Use stable version
-git+https://github.com/Yodo1Games/py-yodo1@main#egg=yodo1
-
-# Use a specific version
-git+https://github.com/Yodo1Games/py-yodo1@<version>#egg=yodo1
+```shell
+pip install yodo1-toolkit
 ```
 
 
