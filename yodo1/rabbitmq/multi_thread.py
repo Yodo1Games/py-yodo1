@@ -142,7 +142,7 @@ class MultiThreadConsumer:
         _queue_name: str
     ) -> None:
         if self.verbose:
-            logger.debug(f"received message with tag {method_frame.delivery_tag} body: {message_body}")
+            logger.debug(f"received message with tag {method_frame.delivery_tag} body: {message_body.decode()}")
         future = self.thread_pool.submit(handler_function,
                                          method_frame=method_frame,
                                          header_frame=header_frame,

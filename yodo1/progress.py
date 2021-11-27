@@ -9,12 +9,12 @@ class ProgressBar:
     WIDTH = 30
 
     def __init__(self, total: int, desc: str, step: int = 50) -> None:
-        self.index = 0
-        self.total = total
-        self.step = step
-        self.desc = desc
+        self.index: int = 0
+        self.total: int = total
+        self.step: int = step
+        self.desc: str = desc
 
-        self._start_at = 0
+        self._start_at: float = 0
 
     def _format_time(self, secs: float) -> str:
         if secs < 3600:
