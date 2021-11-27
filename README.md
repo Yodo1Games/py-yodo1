@@ -199,7 +199,8 @@ def demo_callback(method_frame: pika.spec.Basic.Deliver,
         # Process success, should ack
         return CallbackResult(MQAction.nack)
 
-consumer = MultiThreadConsumer(uri="amqps://xxxx")
+consumer = MultiThreadConsumer(uri="amqps://xxxx",
+                               verbose=True)
 consumer.setup_queue_consumer("test.consumer.a.debug",
                               handler_function=demo_callback)
 
