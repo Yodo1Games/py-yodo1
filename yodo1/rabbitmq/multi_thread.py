@@ -49,17 +49,20 @@ class MultiThreadConsumer:
                  uri: str,
                  *,
                  qos: int = 10,
-                 max_worker: int = 10) -> None:
+                 max_worker: int = 10,
+                 verbose: bool = False) -> None:
         """
         :param uri: MQ URI
         :param qos: qos
         :param max_worker: thread max worker, if you want to process MQ in single thread, set it to 1.
+        :param verbose
         """
         params = pika.URLParameters(uri)
         self.connection = pika.BlockingConnection(params)
         self.channel = self.connection.channel()
         self.channel.basic_qos(prefetch_count=qos)
         self.thread_pool = ThreadPoolExecutor(max_workers=max_worker)
+        self.verbose = verbose
 
     def setup_queue_consumer(self,
                              queue_name: str,
@@ -138,6 +141,8 @@ class MultiThreadConsumer:
         handler_function: Callable,
         _queue_name: str
     ) -> None:
+        if self.verbose:
+            logger.debug(f"received message with tag {method_frame.delivery_tag} body: {message_body}")
         future = self.thread_pool.submit(handler_function,
                                          method_frame=method_frame,
                                          header_frame=header_frame,
@@ -153,16 +158,4 @@ class MultiThreadConsumer:
 
 
 if __name__ == '__main__':
-    consumer = MultiThreadConsumer(uri="")
-
-    APP_QUEUE_NAME = "queue-a"
-    consumer.setup_queue_consumer(queue_name=APP_QUEUE_NAME,
-                                  exchange_name="exchange-a",
-                                  handler_function=demo_callback)
-
-    try:
-        consumer.start_consuming()
-    except KeyboardInterrupt:
-        consumer.stop_consuming()
-
-    consumer.close()
+    pass
