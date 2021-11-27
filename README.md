@@ -4,7 +4,9 @@ Includes
 
 - sso auth
 - sqlalchemy
-- Rabbit MQ (aio_pika)
+- Rabbit MQ Consumer
+- Progress Bar
+- Logger
 - pydantic
 
 ## Install
