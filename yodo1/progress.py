@@ -49,7 +49,7 @@ if __name__ == '__main__':
     import logging
 
     logging.basicConfig(level='DEBUG')
-    p = ProgressBar(total=20, desc="Hacking ...", step=20//6)
+    p = ProgressBar(total=20, desc="Hacking ...", step=20 // 6)
 
     for i in range(20):
         p.update()
