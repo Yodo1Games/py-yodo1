@@ -82,6 +82,9 @@ class DBManager:
             if db:
                 db.close()
 
+    def session(self) -> Session:
+        return self.SessionLocal()
+
 
 __all__ = [
     'Base',
