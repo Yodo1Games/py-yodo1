@@ -71,7 +71,7 @@ class BaseDBModel(Base):  # type: ignore
 class DBManager:
     def __init__(self, engine: Any):
         self.engine = engine
-        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        self._SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
     def get_session(self) -> Generator[None, Session, None]:
         db = None
@@ -81,6 +81,9 @@ class DBManager:
         finally:
             if db:
                 db.close()
+
+    def SessionLocal(self) -> Session:
+        return self._SessionLocal()
 
     def session(self) -> Session:
         return self.SessionLocal()
