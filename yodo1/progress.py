@@ -1,6 +1,6 @@
 import logging
-import time
 import random
+import time
 
 logger = logging.getLogger('yodo1.progress')
 
@@ -20,7 +20,7 @@ class ProgressBar:
         if secs < 3600:
             return f"{secs // 60:02.0f}:{secs % 60:02.0f}"
         else:
-            return f"{secs // 3600:02.0f}:{secs // 60:02.0f}:{secs % 60:02d}"
+            return f"{secs // 3600:02.0f}:{secs // 60:02.0f}:{int(secs % 60):02d}"
 
     def _get_time_string(self) -> str:
         spend_time = time.time() - self._start_at
