@@ -23,6 +23,9 @@ class ProgressBar:
             return f"{secs // 3600:02.0f}:{secs // 60:02.0f}:{int(secs % 60):02d}"
 
     def _get_time_string(self) -> str:
+        # Fix crash when index == 0
+        if self.index == 0:
+            return ""
         spend_time = time.time() - self._start_at
         estimated_time = spend_time / self.index * self.total
 
@@ -33,6 +36,9 @@ class ProgressBar:
             self._start_at = time.time()
 
         self.index += n
+
+        if self.total == 0:
+            return
 
         if self.index % self.step == 0 or self.index == self.total:
             fill_count = int(ProgressBar.WIDTH * self.index / self.total)
