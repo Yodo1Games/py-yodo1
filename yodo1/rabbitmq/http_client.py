@@ -1,15 +1,11 @@
 import json
 import logging
+from typing import Dict, Optional
+from urllib.parse import quote_plus, urlparse
+
 import elasticapm
 import httpx
-from typing import Dict
-from urllib.parse import quote_plus, urlparse
-from tenacity import (
-    AsyncRetrying,
-    Retrying,
-    stop_after_attempt,
-    wait_random,
-)
+from tenacity import AsyncRetrying, Retrying, stop_after_attempt, wait_random
 
 logger = logging.getLogger("yodo1.rabbitmq")
 
@@ -87,13 +83,8 @@ class RabbitHttpSender:
         :param max_delay_on_retry: max delay when retrying to send message
         :return:
         """
-        if self.apm_client:
-            if event_name is None:
-                raise ValueError("Must set event name when using with apm client")
-            self.apm_client.begin_transaction(transaction_type="RabbitMQ")
-            traceparent_string = elasticapm.get_trace_parent_header()
-        else:
-            traceparent_string = None
+        # setup trace context
+        traceparent_string = self._start_trace(event_name=event_name)
 
         if max_retry is None:
             max_retry = self.global_max_retry
@@ -153,14 +144,8 @@ class RabbitHttpSender:
         :param max_delay_on_retry: max delay when retrying to send message
         :return:
         """
-        # setup trace for APM
-        if self.apm_client:
-            if event_name is None:
-                raise ValueError("Must set event name when using with apm client")
-            self.apm_client.begin_transaction(transaction_type="RabbitMQ")
-            traceparent_string = elasticapm.get_trace_parent_header()
-        else:
-            traceparent_string = None
+        # setup trace context
+        traceparent_string = self._start_trace(event_name=event_name)
 
         if max_retry is None:
             max_retry = self.global_max_retry
@@ -268,3 +253,20 @@ class RabbitHttpSender:
             except Exception as e:
                 logger.warning(f"Message send failed, error: {e}")
                 raise MQSendFailedException
+
+    def _start_trace(self, event_name: str) -> Optional[str]:
+        if self.apm_client:
+            if event_name is None:
+                raise ValueError("Must set event name when using with apm client")
+            # Get trace parent from the context if exists
+            # This will correlate this MQ with the trigger request
+            traceparent_string = elasticapm.get_trace_parent_header()
+            if traceparent_string:
+                parent = elasticapm.trace_parent_from_string(traceparent_string)
+            else:
+                parent = None
+            self.apm_client.begin_transaction(transaction_type="RabbitMQ", trace_parent=parent)
+            traceparent_string = elasticapm.get_trace_parent_header()
+        else:
+            traceparent_string = None
+        return traceparent_string
