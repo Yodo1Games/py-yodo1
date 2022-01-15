@@ -213,45 +213,55 @@ consumer.close()
 ```
 
 
-`AsyncRabbit` is Deprecated due to stability. Please use `yodo1.rabbitmq.MultiThreadConsumerl`
+`AsyncRabbit` is Deprecated due to stability, will remove from version 0.3.0. Please use `yodo1.rabbitmq.MultiThreadConsumerl`
+
+### How to use Sender
+
+`RabbitHttpSender` is a thread safe sender with send MQ directly using the HTTP client.
 
 ```python
 import json
 import aio_pika
-from yodo1.aio_pika import AsyncRabbit
+from yodo1.rabbitmq import RabbitHttpSender
 
-# create a `AsyncRabbit` instance with configs.
-aio_rabbit = AsyncRabbit(host=conf.MQ_HOST,
-                         port=conf.MQ_PORT,
-                         login=conf.MQ_USER,
-                         password=conf.MQ_PASSWORD,
-                         virtualhost='/' + conf.env)
+# Recommend to share one sender client for each app worker
 
+# Init with URI
+uri = "https://username:password@rabbit-host/virtualhost"
+rabbit_params = RabbitHttpSender.server_param_from_uri(uri)
+rabbit_sender = RabbitHttpSender(**rabbit_params)
 
-# Define a callback function
-async def my_callback_func(message: aio_pika.IncomingMessage) -> None:
-  try:
-    body = json.loads(message.body)
-    event = body.get('event', None)
-    if event == 'target_event':
-      # Handle it and ack
-      message.ack()
-    else:
-      # if failed to handle it nack()
-      message.nack()
-  except Exception as e:
-    # if exception to handle it nack()
-    message.nack()
-  finally:
-    # sleep 0.1 after nack/ack last message, ugly patch before having the x-death logic.
-    time.sleep(0.1)
+# Init with Params
+uri = "https://username:password@rabbit-host/virtualhost"
+rabbit_sender = RabbitHttpSender(host='rabbit-host',
+                                 username='username',
+                                 password='password',
+                                 virtual_host='virtual-host')
 
+# Make sure we have defined target queue and exchange relation on the startup
 @app.on_event("startup")
 async def startup_event() -> None:
-  # Register the callback
-  await aio_rabbit.register_callback(exchange_name="<cool-exchange>",
-                                     queue_name="<cool-queue-name>",
-                                     callback=my_callback_func)
+    # Register the queue and exchange relation.
+    # We need to define the relation in the code
+    rabbit_sender.check_queue(queue_name="only-queue")
+    rabbit_sender.check_queue(queue_name="queue-with-exchange", exchange_name="target-exchange")
+
+
+def do_some_magic_and_publish_to_exchange():
+    do_magic()
+    rabbit_sender.publish(
+      exchange_name='exchange-1',
+      message_body={'magic': 'done'}
+    )
+
+def do_some_magic_and_publish_to_queue_withou_exchange():
+    do_magic()
+    # We can publish message directly to a queue using special exchange ''
+    rabbit_sender.publish(
+      exchange_name='',
+      routing_key='target-queue-name',
+      message_body={'magic': 'done'}
+    )
 ```
 
 
