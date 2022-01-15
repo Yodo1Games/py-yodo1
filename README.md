@@ -225,7 +225,7 @@ consumer = MultiThreadConsumer(uri="amqps://xxxx",
                                verbose=True)
 ```
 
-`AsyncRabbit` is Deprecated due to stability, will remove from version 0.3.0. Please use `yodo1.rabbitmq.MultiThreadConsumerl`
+`AsyncRabbit` is Deprecated due to stability, will remove from version 0.3.0. Please use `yodo1.rabbitmq.MultiThreadConsumer`
 
 ### How to use Sender
 
