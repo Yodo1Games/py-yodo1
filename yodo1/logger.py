@@ -82,6 +82,7 @@ def change_default_log_levels() -> None:
     logging.getLogger("elasticapm.conf").setLevel(logging.INFO)
     logging.getLogger("databases").setLevel(logging.INFO)
     logging.getLogger("aio_pika").setLevel(logging.INFO)
+    logging.getLogger("pika").setLevel(logging.INFO)
     logging.getLogger("charset_normalizer").setLevel(logging.WARNING)
 
 
