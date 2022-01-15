@@ -346,7 +346,6 @@ rabbit_sender.publish(
     )
 ```
 
-
 ## Progress Bar
 
 A simple progress bar can display properly on k8s and Grafana.
