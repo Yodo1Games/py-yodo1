@@ -21,7 +21,7 @@ httpx[http2]
 
 # Logger
 pretty_errors>=1.2.20,<2
-colorlog>=5.0.1,<6
+colorlog>=6.6.0,<7
 
 # Cache
 cachetools>=4.2.2,<5
