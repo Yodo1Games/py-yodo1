@@ -5,6 +5,7 @@ from urllib.parse import quote_plus, urlparse
 
 import elasticapm
 import httpx
+import pika
 from tenacity import AsyncRetrying, Retrying, stop_after_attempt, wait_random
 
 logger = logging.getLogger("yodo1.rabbitmq")
@@ -51,15 +52,25 @@ class RabbitHttpSender:
             "virtual_host": obj.path[1:],
         }
 
-    def check_queue(self, queue_name: str, exchange_name: str = None) -> None:
+    def declare_exchange(self, exchange_name: str) -> None:
         """
-        Check queue and exchange on start up
+        Declare exchange on start up. We should declare exchange in the code.
+        We use pika here for convinience,
         :param queue_name:
         :param exchange_name:
         :return:
         """
-        # TODO: implement cheking and init function
-        pass
+        uri = f"https://{self.username}:{self.password}@{self.host}/{self.virtual_host}"
+        connect_params = pika.URLParameters(uri)
+        connection = pika.BlockingConnection(connect_params)
+        channel = connection.channel()
+
+        channel.exchange_declare(
+            exchange=exchange_name, exchange_type="fanout", durable=True
+        )
+        logger.info(f"Exchange {exchange_name} declared")
+        channel.close()
+        connection.close()
 
     def publish(
         self,
@@ -154,7 +165,7 @@ class RabbitHttpSender:
             properties=properties,
             routing_key=routing_key,
             traceparent_string=traceparent_string,
-            event_name=event_name
+            event_name=event_name,
         )
         url = f"https://{self.host}/api/exchanges/{quote_plus(self.virtual_host)}/{exchange_name}/publish"
         try:
@@ -265,7 +276,9 @@ class RabbitHttpSender:
                 parent = elasticapm.trace_parent_from_string(traceparent_string)
             else:
                 parent = None
-            self.apm_client.begin_transaction(transaction_type="RabbitMQ", trace_parent=parent)
+            self.apm_client.begin_transaction(
+                transaction_type="RabbitMQ", trace_parent=parent
+            )
             traceparent_string = elasticapm.get_trace_parent_header()
         else:
             traceparent_string = None

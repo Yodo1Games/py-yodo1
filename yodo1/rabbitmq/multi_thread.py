@@ -5,10 +5,10 @@ import os
 import random
 import socket
 import string
-import elasticapm
-from concurrent.futures import ThreadPoolExecutor, Future
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Callable
 
+import elasticapm
 import pika
 from pika.channel import Channel
 
