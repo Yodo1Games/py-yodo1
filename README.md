@@ -1,13 +1,21 @@
 # Yodo1 Python Toolkit
 
-Includes
-
-- sso auth
-- sqlalchemy
-- Rabbit MQ Consumer
-- Progress Bar
-- Logger
-- pydantic
+- [Install](#install)
+- [SSO](#sso)
+  - [Setup](#setup)
+  - [User with FastAPI](#user-with-fastapi)
+- [sqlalchemy](#sqlalchemy)
+  - [Use with FastAPI](#use-with-fastapi)
+  - [Use without FastAPI](#use-without-fastapi)
+  - [Define Model](#define-model)
+  - [Define Schema](#define-schema)
+- [Rabbit MQ](#rabbit-mq)
+  - [How to use Consumer](#how-to-use-consumer)
+  - [Consume MQ with apm enabled](#consume-mq-with-apm-enabled)
+  - [How to use Sender](#how-to-use-sender)
+  - [Send MQ with apm enabled](#send-mq-with-apm-enabled)
+  - [Send MQ with FastAPI apm enabled](#send-mq-with-fastapi-apm-enabled)
+- [Progress Bar](#progress-bar)
 
 ## Install
 
