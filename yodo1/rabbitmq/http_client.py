@@ -18,39 +18,23 @@ class MQSendFailedException(Exception):
 class RabbitHttpSender:
     def __init__(
         self,
-        host: str,
-        username: str,
-        password: str,
-        virtual_host: str,
+        uri: str,
+        *,
         global_max_retry: int = 3,
         apm_client: elasticapm.Client = None,
     ):
-        self.host = host
-        self.username = username
-        self.password = password
-        self.virtual_host = virtual_host
+        self.uri = uri
+
+        uri_obj = urlparse(uri)
+        self.host = uri_obj.hostname
+        self.username = uri_obj.username
+        self.password = uri_obj.password
+        self.virtual_host = uri_obj.path[1:]
         self.global_max_retry = global_max_retry
         self.apm_client: elasticapm.Client = apm_client
 
         if self.apm_client:
             elasticapm.instrument()
-
-    @classmethod
-    def server_param_from_uri(cls, uri: str) -> Dict:
-        """
-        Parse uri info server param, used to simplified env variables in the container.
-        Example:
-
-        >>> server_params = RabbitHttpSender.server_param_from_uri(demo_uri)
-        >>> s = RabbitHttpSender(**server_params)
-        """
-        obj = urlparse(uri)
-        return {
-            "host": obj.hostname,
-            "username": obj.username,
-            "password": obj.password,
-            "virtual_host": obj.path[1:],
-        }
 
     def declare_exchange(self, exchange_name: str) -> None:
         """

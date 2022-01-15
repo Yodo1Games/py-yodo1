@@ -249,15 +249,7 @@ from yodo1.rabbitmq import RabbitHttpSender
 
 # Init with URI
 uri = "https://username:password@rabbit-host/virtualhost"
-rabbit_params = RabbitHttpSender.server_param_from_uri(uri)
-rabbit_sender = RabbitHttpSender(**rabbit_params)
-
-# Init with Params
-uri = "https://username:password@rabbit-host/virtualhost"
-rabbit_sender = RabbitHttpSender(host="rabbit-host",
-                                 username="username",
-                                 password="password",
-                                 virtual_host="virtual-host")
+rabbit_sender = RabbitHttpSender(uri=uri)
 
 # Make sure we have defined target queue and exchange relation on the startup
 @app.on_event("startup")
@@ -298,8 +290,7 @@ apm_client = elasticapm.Client(
 
 # init sender with apm client
 uri = "https://username:password@rabbit-host/virtualhost"
-rabbit_params = RabbitHttpSender.server_param_from_uri(uri)
-rabbit_sender = RabbitHttpSender(**rabbit_params, apm_client=apm_client)
+rabbit_sender = RabbitHttpSender(uri=uri)
 
 rabbit_sender.publish(
       event_name="alian-found", # Must have a event name when using apm client
@@ -336,8 +327,7 @@ app.add_middleware(ElasticAPM, client=apm_client)
 
 # init sender with apm client
 uri = "https://username:password@rabbit-host/virtualhost"
-rabbit_params = RabbitHttpSender.server_param_from_uri(uri)
-rabbit_sender = RabbitHttpSender(**rabbit_params, apm_client=apm_client)
+rabbit_sender = RabbitHttpSender(uri=uri)
 
 rabbit_sender.publish(
       event_name="alian-found", # Must have a event name when using apm client
