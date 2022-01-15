@@ -15,8 +15,6 @@ Includes
 pip install yodo1-toolkit
 ```
 
-
-
 ## SSO
 
 ### Setup
@@ -163,7 +161,6 @@ class OutputModelWithDateSchema(BaseDateSchema):
   title: str
 ```
 
-
 ## Rabbit MQ
 
 ### How to use Consumer
@@ -211,7 +208,6 @@ except KeyboardInterrupt:
 
 consumer.close()
 ```
-
 
 `AsyncRabbit` is Deprecated due to stability, will remove from version 0.3.0. Please use `yodo1.rabbitmq.MultiThreadConsumerl`
 
@@ -264,6 +260,33 @@ def do_some_magic_and_publish_to_queue_withou_exchange():
     )
 ```
 
+#### Send MQ with apm enabled
+
+```python
+import elasticapm
+apm_client = elasticapm.Client(
+      service_name="awesome-api",
+      server_url="https://apm-host",
+      secret_token="token")
+
+# init sender with apm client
+uri = "https://username:password@rabbit-host/virtualhost"
+rabbit_params = RabbitHttpSender.server_param_from_uri(uri)
+rabbit_sender = RabbitHttpSender(**rabbit_params, apm_client=apm_client)
+
+rabbit_sender.publish(
+      event_name='alian-found', # Must have a event name when using apm client
+      exchange_name='',
+      routing_key='target-queue-name',
+      message_body={'magic': 'done'}
+    )
+
+rabbit_sender.publish(
+      event_name='alian-found', # Must have a event name when using apm client
+      exchange_name='exchange-1',
+      message_body={'magic': 'done'}
+    )
+```
 
 ## Progress Bar
 
