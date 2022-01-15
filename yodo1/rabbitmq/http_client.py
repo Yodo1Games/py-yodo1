@@ -106,11 +106,11 @@ class RabbitHttpSender:
                         url=url,
                         message=message,
                     )
-                    logger.debug(
-                        f"Successfully send MQ message to exchange: {exchange_name}"
-                    )
 
-            # If successly send message
+            trace_id = elasticapm.get_trace_id()
+            logger.debug(
+                f"Successfully send MQ message to exchange: {exchange_name} trace_id: {trace_id}"
+            )
             if self.apm_client:
                 self.apm_client.end_transaction(name=event_name, result="success")
         except Exception as e:
@@ -164,9 +164,10 @@ class RabbitHttpSender:
                         url=url,
                         message=message,
                     )
-                    logger.debug(
-                        f"Successfully send MQ message to exchange: {exchange_name}"
-                    )
+            trace_id = elasticapm.get_trace_id()
+            logger.debug(
+                f"Successfully send MQ message to exchange: {exchange_name} trace_id: {trace_id}"
+            )
             # If successly send message
             if self.apm_client:
                 self.apm_client.end_transaction(name=event_name, result="success")
