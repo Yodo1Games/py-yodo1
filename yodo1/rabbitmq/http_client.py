@@ -90,7 +90,7 @@ class RabbitHttpSender:
         if self.apm_client:
             if event_name is None:
                 raise ValueError("Must set event name when using with apm client")
-            self.apm_client.begin_transaction(transaction_type="mq")
+            self.apm_client.begin_transaction(transaction_type="RabbitMQ")
             traceparent_string = elasticapm.get_trace_parent_header()
         else:
             traceparent_string = None
