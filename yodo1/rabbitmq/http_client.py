@@ -50,7 +50,7 @@ class RabbitHttpSender:
             "virtual_host": obj.path[1:],
         }
 
-    def check_queue(self, queue_name: str, exchange_name: str = None):
+    def check_queue(self, queue_name: str, exchange_name: str = None) -> None:
         """
         Check queue and exchange on start up
         :param queue_name:
@@ -159,7 +159,7 @@ class RabbitHttpSender:
         }
         return message
 
-    def _sync_publish(self, *, url: str, message: Dict):
+    def _sync_publish(self, *, url: str, message: Dict) -> None:
         """
         publish MQ using sync http request
         """
