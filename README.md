@@ -174,7 +174,7 @@ class OutputModelWithDateSchema(BaseDateSchema):
 
 ### How to use Consumer
 
-```python3
+```python
 import logging
 import random
 import time
@@ -207,7 +207,8 @@ def demo_callback(method_frame: pika.spec.Basic.Deliver,
 
 consumer = MultiThreadConsumer(uri="amqps://xxxx",
                                verbose=True)
-consumer.setup_queue_consumer("test.consumer.a.debug",
+consumer.setup_queue_consumer(queue_name="test.consumer.a.debug",
+                              exchange_name="target-exchange",
                               handler_function=demo_callback)
 
 try:
@@ -220,7 +221,7 @@ consumer.close()
 
 #### Consume MQ with apm enabled
 
-```python3
+```python
 import elasticapm
 apm_client = elasticapm.Client(
       service_name="awesome-api",
@@ -254,10 +255,9 @@ rabbit_sender = RabbitHttpSender(uri=uri)
 # Make sure we have defined target queue and exchange relation on the startup
 @app.on_event("startup")
 async def startup_event() -> None:
-    # Register the queue and exchange relation.
+    # Register the exchange.
     # We need to define the relation in the code
-    rabbit_sender.declare_queue(queue_name="only-queue")
-    rabbit_sender.declare_queue(queue_name="queue-with-exchange", exchange_name="target-exchange")
+    rabbit_sender.declare_exchange(exchange_name="only-queue")
 
 
 def do_some_magic_and_publish_to_exchange():
