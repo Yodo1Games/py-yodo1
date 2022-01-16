@@ -188,7 +188,7 @@ class RabbitHttpSender:
             self.apm_client.end_transaction(name=event_name, result="failure")
             raise e
 
-    async def close(self):
+    async def close(self) -> None:
         self.sync_httpx_client.close()
         await self.async_httpx_client.aclose()
 
