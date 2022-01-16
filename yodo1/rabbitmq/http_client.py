@@ -22,6 +22,8 @@ class RabbitHttpSender:
         *,
         global_max_retry: int = 3,
         apm_client: elasticapm.Client = None,
+        async_httpx_client: httpx.AsyncClient = httpx.AsyncClient(),
+        sync_httpx_client: httpx.Client = httpx.Client(),
     ):
         self.uri = uri
 
@@ -32,6 +34,9 @@ class RabbitHttpSender:
         self.virtual_host = uri_obj.path[1:]
         self.global_max_retry = global_max_retry
         self.apm_client: elasticapm.Client = apm_client
+
+        self.async_httpx_client = async_httpx_client
+        self.sync_httpx_client = sync_httpx_client
 
         if self.apm_client:
             elasticapm.instrument()
@@ -124,7 +129,7 @@ class RabbitHttpSender:
         exchange_name: str,
         message_body: Dict,
         event_name: str = None,
-        properties: Dict = None,
+        properties: Optional[Dict] = None,
         routing_key: str = "",
         max_retry: int = None,
         max_delay_on_retry: int = 30,
@@ -176,11 +181,15 @@ class RabbitHttpSender:
             self.apm_client.end_transaction(name=event_name, result="failure")
             raise e
 
+    async def close(self):
+        self.sync_httpx_client.close()
+        await self.async_httpx_client.aclose()
+
     @staticmethod
     def _build_message_json(
         *,
         message_body: Dict,
-        properties: Dict = None,
+        properties: Optional[Dict] = None,
         routing_key: str = "",
         traceparent_string: str = None,
         event_name: str = None,
@@ -211,44 +220,39 @@ class RabbitHttpSender:
         """
         publish MQ using sync http request
         """
-        try:
-            r = httpx.post(
-                url, json=message, auth=httpx.BasicAuth(self.username, self.password)
-            )
-            if r.status_code == 200:
-                pass
-            else:
-                logger.warning(f"Failed to send MQ message, server response: {r.text}")
-                raise MQSendFailedException
-        except MQSendFailedException as e:
-            raise e
-        except Exception as e:
-            logger.warning(f"Message send failed, error: {e}")
-            raise MQSendFailedException
+        with self.sync_httpx_client as client:
+            try:
+                r = client.post(
+                    url, json=message, auth=httpx.BasicAuth(self.username, self.password)
+                )
+                self._check_mq_response(r)
+            except MQSendFailedException as e:
+                elasticapm.capture_exception()
+                raise e
+            except Exception as e:
+                elasticapm.capture_exception()
+                logger.warning(f"Message send failed, error: {e}")
+                raise MQSendFailedException(str(e))
 
     async def _async_publish(self, *, url: str, message: Dict) -> None:
         """
         publish MQ using async http request
         """
-        async with httpx.AsyncClient() as client:
+        async with self.async_httpx_client as client:
             try:
                 r = await client.post(
                     url,
                     json=message,
                     auth=httpx.BasicAuth(self.username, self.password),
                 )
-                if r.status_code == 200:
-                    pass
-                else:
-                    logger.warning(
-                        f"Failed to send MQ message, server response: {r.text}"
-                    )
-                    raise MQSendFailedException
+                self._check_mq_response(r)
             except MQSendFailedException as e:
+                elasticapm.capture_exception()
                 raise e
             except Exception as e:
+                elasticapm.capture_exception()
                 logger.warning(f"Message send failed, error: {e}")
-                raise MQSendFailedException
+                raise MQSendFailedException(str(e))
 
     def _start_trace(self, event_name: str) -> Optional[str]:
         if self.apm_client:
@@ -268,3 +272,10 @@ class RabbitHttpSender:
         else:
             traceparent_string = None
         return traceparent_string
+
+    def _check_mq_response(response: httpx.Response) -> None:
+        if response.status_code == 200:
+            logger.debug(f"Succesfully send MQ message, server response: {response.text}")
+        else:
+            logger.warning(f"Failed to send MQ message, server response: {response.text}")
+            raise MQSendFailedException(response.text)
