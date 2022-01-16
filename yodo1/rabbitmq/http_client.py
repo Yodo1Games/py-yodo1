@@ -25,6 +25,13 @@ class RabbitHttpSender:
         async_httpx_client: httpx.AsyncClient = httpx.AsyncClient(),
         sync_httpx_client: httpx.Client = httpx.Client(),
     ):
+        """
+        :param uri: rabbitmq uri
+        :param global_max_retry: max retry count
+        :param apm_client: elasticapm client
+        :param async_httpx_client: async httpx client
+        :param sync_httpx_client: sync httpx client
+        """
         self.uri = uri
 
         uri_obj = urlparse(uri)
@@ -227,11 +234,8 @@ class RabbitHttpSender:
                 )
                 self._check_mq_response(r)
             except MQSendFailedException as e:
-                elasticapm.capture_exception()
                 raise e
             except Exception as e:
-                elasticapm.capture_exception()
-                logger.warning(f"Message send failed, error: {e}")
                 raise MQSendFailedException(str(e))
 
     async def _async_publish(self, *, url: str, message: Dict) -> None:
@@ -247,11 +251,8 @@ class RabbitHttpSender:
                 )
                 self._check_mq_response(r)
             except MQSendFailedException as e:
-                elasticapm.capture_exception()
                 raise e
             except Exception as e:
-                elasticapm.capture_exception()
-                logger.warning(f"Message send failed, error: {e}")
                 raise MQSendFailedException(str(e))
 
     def _start_trace(self, event_name: str) -> Optional[str]:
@@ -275,7 +276,6 @@ class RabbitHttpSender:
 
     def _check_mq_response(response: httpx.Response) -> None:
         if response.status_code == 200:
-            logger.debug(f"Succesfully send MQ message, server response: {response.text}")
+            pass
         else:
-            logger.warning(f"Failed to send MQ message, server response: {response.text}")
             raise MQSendFailedException(response.text)
