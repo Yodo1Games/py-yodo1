@@ -223,6 +223,13 @@ class RabbitHttpSender:
         }
         return message
 
+    @staticmethod
+    def _check_mq_response(response: httpx.Response) -> None:
+        if response.status_code == 200:
+            pass
+        else:
+            raise MQSendFailedException(response.text)
+
     def _sync_publish(self, *, url: str, message: Dict) -> None:
         """
         publish MQ using sync http request
@@ -230,7 +237,9 @@ class RabbitHttpSender:
         with self.sync_httpx_client as client:
             try:
                 r = client.post(
-                    url, json=message, auth=httpx.BasicAuth(self.username, self.password)
+                    url,
+                    json=message,
+                    auth=httpx.BasicAuth(self.username, self.password),
                 )
                 self._check_mq_response(r)
             except MQSendFailedException as e:
@@ -273,9 +282,3 @@ class RabbitHttpSender:
         else:
             traceparent_string = None
         return traceparent_string
-
-    def _check_mq_response(response: httpx.Response) -> None:
-        if response.status_code == 200:
-            pass
-        else:
-            raise MQSendFailedException(response.text)
