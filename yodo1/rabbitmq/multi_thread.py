@@ -143,28 +143,21 @@ class MultiThreadConsumer:
                 )
                 self.apm_client.begin_transaction("RabbitMQ", trace_parent=parent)
 
-        result: CallbackResult = handler_function(
+        callback_result: CallbackResult = handler_function(
             method_frame=method_frame,
             header_frame=header_frame,
             message_body=message_body,
         )
 
         trace_id = elasticapm.get_trace_id()
-        if result.action == MQAction.ack:
-            logger.debug(
-                f"ack message on Queue<{_queue_name}> with "
-                f"delivery_tag: {method_frame.delivery_tag} trace_id: {trace_id}"
-            )
-            if trace_id:
-                self.apm_client.end_transaction(name=f"queue:{_queue_name}", result="success")
-        else:
-            logger.debug(
-                f"nack message on Queue<{_queue_name}> with "
-                f"delivery_tag: {method_frame.delivery_tag} trace_id: {trace_id}"
-            )
-            if trace_id:
-                self.apm_client.end_transaction(name=f"queue:{_queue_name}", result="failure")
-        return result
+        logger.debug(f"{callback_result.action.value.title()} message on Queue<{_queue_name}> with "
+                     f"delivery_tag: {method_frame.delivery_tag} trace_id: {trace_id}" )
+
+        if trace_id:
+            tran_result = "success" if callback_result.action == MQAction.ack else "failure"
+            self.apm_client.end_transaction(name=f"queue:{_queue_name}", result=tran_result)
+
+        return callback_result
 
     def _handle_ack(
         self,
