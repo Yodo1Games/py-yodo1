@@ -327,7 +327,7 @@ app.add_middleware(ElasticAPM, client=apm_client)
 
 # init sender with apm client
 uri = "https://username:password@rabbit-host/virtualhost"
-rabbit_sender = RabbitHttpSender(uri=uri)
+rabbit_sender = RabbitHttpSender(uri=uri, apm_client=apm_client)
 
 rabbit_sender.publish(
       event_name="alian-found", # Must have a event name when using apm client
