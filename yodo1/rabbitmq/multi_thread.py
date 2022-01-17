@@ -150,12 +150,18 @@ class MultiThreadConsumer:
         )
 
         trace_id = elasticapm.get_trace_id()
-        logger.debug(f"{callback_result.action.value.title()} message on Queue<{_queue_name}> with "
-                     f"delivery_tag: {method_frame.delivery_tag} trace_id: {trace_id}" )
+        logger.debug(
+            f"{callback_result.action.value.title()} message on Queue<{_queue_name}> with "
+            f"delivery_tag: {method_frame.delivery_tag} trace_id: {trace_id}"
+        )
 
         if trace_id:
-            tran_result = "success" if callback_result.action == MQAction.ack else "failure"
-            self.apm_client.end_transaction(name=f"queue:{_queue_name}", result=tran_result)
+            tran_result = (
+                "success" if callback_result.action == MQAction.ack else "failure"
+            )
+            self.apm_client.end_transaction(
+                name=f"queue:{_queue_name}", result=tran_result
+            )
 
         return callback_result
 
