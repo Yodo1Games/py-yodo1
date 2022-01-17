@@ -126,6 +126,7 @@ class RabbitHttpSender:
             if self.apm_client:
                 self.apm_client.end_transaction(name=event_name, result="success")
         except Exception as e:
+            logger.warning("Failed to send MQ message to exchange: {exchange_name} trace_id: {trace_id}")
             self.apm_client.capture_exception()
             self.apm_client.end_transaction(name=event_name, result="failure")
             raise e
@@ -184,6 +185,7 @@ class RabbitHttpSender:
             if self.apm_client:
                 self.apm_client.end_transaction(name=event_name, result="success")
         except Exception as e:
+            logger.warning("Failed to send MQ message to exchange: {exchange_name} trace_id: {trace_id}")
             self.apm_client.capture_exception()
             self.apm_client.end_transaction(name=event_name, result="failure")
             raise e
