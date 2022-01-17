@@ -126,7 +126,9 @@ class RabbitHttpSender:
             if self.apm_client:
                 self.apm_client.end_transaction(name=event_name, result="success")
         except Exception as e:
-            logger.warning("Failed to send MQ message to exchange: {exchange_name} trace_id: {trace_id}")
+            logger.warning(
+                "Failed to send MQ message to exchange: {exchange_name} trace_id: {trace_id}"
+            )
             self.apm_client.capture_exception()
             self.apm_client.end_transaction(name=event_name, result="failure")
             raise e
@@ -185,7 +187,9 @@ class RabbitHttpSender:
             if self.apm_client:
                 self.apm_client.end_transaction(name=event_name, result="success")
         except Exception as e:
-            logger.warning("Failed to send MQ message to exchange: {exchange_name} trace_id: {trace_id}")
+            logger.warning(
+                "Failed to send MQ message to exchange: {exchange_name} trace_id: {trace_id}"
+            )
             self.apm_client.capture_exception()
             self.apm_client.end_transaction(name=event_name, result="failure")
             raise e
@@ -236,35 +240,33 @@ class RabbitHttpSender:
         """
         publish MQ using sync http request
         """
-        with self.sync_httpx_client as client:
-            try:
-                r = client.post(
-                    url,
-                    json=message,
-                    auth=httpx.BasicAuth(self.username, self.password),
-                )
-                self._check_mq_response(r)
-            except MQSendFailedException as e:
-                raise e
-            except Exception as e:
-                raise MQSendFailedException(str(e))
+        try:
+            r = self.sync_httpx_client.post(
+                url,
+                json=message,
+                auth=httpx.BasicAuth(self.username, self.password),
+            )
+            self._check_mq_response(r)
+        except MQSendFailedException as e:
+            raise e
+        except Exception as e:
+            raise MQSendFailedException(str(e))
 
     async def _async_publish(self, *, url: str, message: Dict) -> None:
         """
         publish MQ using async http request
         """
-        async with self.async_httpx_client as client:
-            try:
-                r = await client.post(
-                    url,
-                    json=message,
-                    auth=httpx.BasicAuth(self.username, self.password),
-                )
-                self._check_mq_response(r)
-            except MQSendFailedException as e:
-                raise e
-            except Exception as e:
-                raise MQSendFailedException(str(e))
+        try:
+            r = await self.async_httpx_client.post(
+                url,
+                json=message,
+                auth=httpx.BasicAuth(self.username, self.password),
+            )
+            self._check_mq_response(r)
+        except MQSendFailedException as e:
+            raise e
+        except Exception as e:
+            raise MQSendFailedException(str(e))
 
     def _start_trace(self, event_name: str) -> Optional[str]:
         if self.apm_client:
