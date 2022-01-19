@@ -160,7 +160,7 @@ class MultiThreadConsumer:
                 "success" if callback_result.action == MQAction.ack else "failure"
             )
             self.apm_client.end_transaction(
-                name=f"queue:{_queue_name}", result=tran_result
+                name=f"MQ QUEUE {_queue_name}", result=tran_result
             )
 
         return callback_result
