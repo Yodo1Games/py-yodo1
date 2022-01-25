@@ -35,12 +35,17 @@ class RabbitHttpSender:
         self.uri = uri
 
         uri_obj = urlparse(uri)
-        self.host = uri_obj.hostname
+        self.scheme = uri_obj.scheme
+        self.hostname = uri_obj.hostname
         self.username = uri_obj.username
         self.password = uri_obj.password
         self.virtual_host = uri_obj.path[1:]
         self.global_max_retry = global_max_retry
         self.apm_client: elasticapm.Client = apm_client
+
+        self.host = uri_obj.hostname
+        if uri_obj.port:
+            self.host = f'{uri_obj.hostname}:{uri_obj.port}'
 
         self.async_httpx_client = async_httpx_client
         self.sync_httpx_client = sync_httpx_client
@@ -56,7 +61,7 @@ class RabbitHttpSender:
         :param exchange_name:
         :return:
         """
-        uri = f"https://{self.username}:{self.password}@{self.host}/{self.virtual_host}"
+        uri = f"amqp://{self.username}:{self.password}@{self.hostname}/{self.virtual_host}"
         connect_params = pika.URLParameters(uri)
         connection = pika.BlockingConnection(connect_params)
         channel = connection.channel()
@@ -104,7 +109,7 @@ class RabbitHttpSender:
             traceparent_string=traceparent_string,
             event_name=event_name,
         )
-        url = f"https://{self.host}/api/exchanges/{quote_plus(self.virtual_host)}/{exchange_name}/publish"
+        url = f"{self.scheme}://{self.host}/api/exchanges/{quote_plus(self.virtual_host)}/{exchange_name}/publish"
 
         try:
             # Retry for n times before give up.
@@ -129,8 +134,9 @@ class RabbitHttpSender:
             logger.warning(
                 "Failed to send MQ message to exchange: {exchange_name} trace_id: {trace_id}"
             )
-            self.apm_client.capture_exception()
-            self.apm_client.end_transaction(name=f"MQ PUBLISH {event_name}", result="failure")
+            if self.apm_client:
+                self.apm_client.capture_exception()
+                self.apm_client.end_transaction(name=f"MQ PUBLISH {event_name}", result="failure")
             raise e
 
     async def async_publish(
@@ -166,7 +172,7 @@ class RabbitHttpSender:
             traceparent_string=traceparent_string,
             event_name=event_name,
         )
-        url = f"https://{self.host}/api/exchanges/{quote_plus(self.virtual_host)}/{exchange_name}/publish"
+        url = f"{self.scheme}://{self.host}/api/exchanges/{quote_plus(self.virtual_host)}/{exchange_name}/publish"
         try:
             # Retry for n times before give up.
             for attempt in AsyncRetrying(
@@ -185,13 +191,14 @@ class RabbitHttpSender:
             )
             # If successly send message
             if self.apm_client:
-                self.apm_client.end_transaction(name=event_name, result="success")
+                self.apm_client.end_transaction(name=f"MQ PUBLISH {event_name}", result="success")
         except Exception as e:
             logger.warning(
                 "Failed to send MQ message to exchange: {exchange_name} trace_id: {trace_id}"
             )
-            self.apm_client.capture_exception()
-            self.apm_client.end_transaction(name=event_name, result="failure")
+            if self.apm_client:
+                self.apm_client.capture_exception()
+                self.apm_client.end_transaction(name=f"MQ PUBLISH {event_name}", result="failure")
             raise e
 
     async def close(self) -> None:
