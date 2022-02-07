@@ -131,6 +131,10 @@ dmypy.json
 
 # IDE
 .idea
+.vscode
 
+# Local
 scripts/env_*
 *.sqlite
+
+demo.py

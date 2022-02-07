@@ -1,19 +1,28 @@
 # Yodo1 Python Toolkit
 
-Includes
-
-- sso auth
-- sqlalchemy
-- Rabbit MQ (aio_pika)
-- pydantic
+- [Yodo1 Python Toolkit](#yodo1-python-toolkit)
+  - [Install](#install)
+  - [SSO](#sso)
+    - [Setup](#setup)
+    - [User with FastAPI](#user-with-fastapi)
+  - [sqlalchemy](#sqlalchemy)
+    - [Use with FastAPI](#use-with-fastapi)
+    - [Use without FastAPI](#use-without-fastapi)
+    - [Define Model](#define-model)
+    - [Define Schema](#define-schema)
+  - [Rabbit MQ](#rabbit-mq)
+    - [How to use Consumer](#how-to-use-consumer)
+      - [Consume MQ with apm enabled](#consume-mq-with-apm-enabled)
+    - [How to use Sender](#how-to-use-sender)
+      - [Send MQ with apm enabled](#send-mq-with-apm-enabled)
+      - [Send MQ with FastAPI apm enabled](#send-mq-with-fastapi-apm-enabled)
+  - [Progress Bar](#progress-bar)
 
 ## Install
 
 ```shell
 pip install yodo1-toolkit
 ```
-
-
 
 ## SSO
 
@@ -36,8 +45,8 @@ def get_current_user_dict(payload: JWTPayload = Depends(auth.current_payload)) -
                               email=payload.email,
                               user_id=payload.sub)
   return {
-    'sub': payload.sub,
-    'email': payload.email,
+    "sub": payload.sub,
+    "email": payload.email,
   }
 
 ```
@@ -54,7 +63,7 @@ app = FastAPI()
 @app.on_event("startup")
 async def startup_event() -> None:
   # Setup public key via sso verser url, this is path to public_key file.
-  auth.setup_with_sso_server('<public_key_url>')
+  auth.setup_with_sso_server("<public_key_url>")
 
   # Or just setup with piblic_key str
   # >>> public_key = "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BA ..."
@@ -72,14 +81,14 @@ from yodo1.sso import JWTPayload
 @router.get("/get_payload")
 async def get_payload(
   payload: JWTPayload=Depends(auth.current_payload)):
-  return f'Hello, {payload.sub}'
+  return f"Hello, {payload.sub}"
 
 
 # use custom user model
 @router.get("/user")
 async def get_payload(
   payload: Dict=Depends(get_current_user_dict)):
-  return f"Hello, {payload['sub']}"
+  return f"Hello, {payload["sub"]}"
 ```
 
 ## sqlalchemy
@@ -90,7 +99,7 @@ Create base instances on `app/base.py` file.
 from sqlalchemy import create_engine
 from yodo1.sqlalchemy import DBManager
 
-engine = create_engine('<db_rui>',
+engine = create_engine("<db_rui>",
                        pool_size=0,
                        pool_recycle=600,
                        max_overflow=-1)
@@ -161,12 +170,11 @@ class OutputModelWithDateSchema(BaseDateSchema):
   title: str
 ```
 
-
 ## Rabbit MQ
 
 ### How to use Consumer
 
-```python3
+```python
 import logging
 import random
 import time
@@ -175,7 +183,7 @@ from yodo1.rabbitmq.multi_thread import MultiThreadConsumer, MQAction, CallbackR
 
 # We can change pika log level to reduce logs.
 logging.getLogger("pika").setLevel(logging.INFO)
-logging.basicConfig(level='DEBUG')
+logging.basicConfig(level="DEBUG")
 
 
 def demo_callback(method_frame: pika.spec.Basic.Deliver,
@@ -197,8 +205,10 @@ def demo_callback(method_frame: pika.spec.Basic.Deliver,
         # Process success, should ack
         return CallbackResult(MQAction.nack)
 
-consumer = MultiThreadConsumer(uri="amqps://xxxx")
-consumer.setup_queue_consumer("test.consumer.a.debug",
+consumer = MultiThreadConsumer(uri="amqps://xxxx",
+                               verbose=True)
+consumer.setup_queue_consumer(queue_name="test.consumer.a.debug",
+                              exchange_name="target-exchange",
                               handler_function=demo_callback)
 
 try:
@@ -209,48 +219,122 @@ except KeyboardInterrupt:
 consumer.close()
 ```
 
+#### Consume MQ with apm enabled
 
-`AsyncRabbit` is Deprecated due to stability. Please use `yodo1.rabbitmq.MultiThreadConsumerl`
+```python
+import elasticapm
+apm_client = elasticapm.Client(
+      service_name="awesome-api",
+      server_url="https://apm-host",
+      secret_token="token",
+      environment="test",
+      service_version="2.0.0")
+
+consumer = MultiThreadConsumer(uri="amqps://xxxx",
+                               apm_client=apm_client,
+                               verbose=True)
+```
+
+`AsyncRabbit` is Deprecated due to stability, will remove from version 0.3.0. Please use `yodo1.rabbitmq.MultiThreadConsumer`
+
+### How to use Sender
+
+`RabbitHttpSender` is a thread safe sender with send MQ directly using the HTTP client.
 
 ```python
 import json
 import aio_pika
-from yodo1.aio_pika import AsyncRabbit
+from yodo1.rabbitmq import RabbitHttpSender
 
-# create a `AsyncRabbit` instance with configs.
-aio_rabbit = AsyncRabbit(host=conf.MQ_HOST,
-                         port=conf.MQ_PORT,
-                         login=conf.MQ_USER,
-                         password=conf.MQ_PASSWORD,
-                         virtualhost='/' + conf.env)
+# Recommend to share one sender client for each app worker
 
+# Init with URI
+uri = "https://username:password@rabbit-host/virtualhost"
+rabbit_sender = RabbitHttpSender(uri=uri)
 
-# Define a callback function
-async def my_callback_func(message: aio_pika.IncomingMessage) -> None:
-  try:
-    body = json.loads(message.body)
-    event = body.get('event', None)
-    if event == 'target_event':
-      # Handle it and ack
-      message.ack()
-    else:
-      # if failed to handle it nack()
-      message.nack()
-  except Exception as e:
-    # if exception to handle it nack()
-    message.nack()
-  finally:
-    # sleep 0.1 after nack/ack last message, ugly patch before having the x-death logic.
-    time.sleep(0.1)
-
+# Make sure we have defined target queue and exchange relation on the startup
 @app.on_event("startup")
 async def startup_event() -> None:
-  # Register the callback
-  await aio_rabbit.register_callback(exchange_name="<cool-exchange>",
-                                     queue_name="<cool-queue-name>",
-                                     callback=my_callback_func)
+    # Register the exchange.
+    # We need to define the relation in the code
+    rabbit_sender.declare_exchange(exchange_name="only-queue")
+
+
+def do_some_magic_and_publish_to_exchange():
+    do_magic()
+    rabbit_sender.publish(
+      exchange_name="exchange-1",
+      message_body={"magic": "done"}
+    )
+
+def do_some_magic_and_publish_to_queue_withou_exchange():
+    do_magic()
+    # We can publish message directly to a queue using special exchange ""
+    rabbit_sender.publish(
+      exchange_name="",
+      routing_key="target-queue-name",
+      message_body={"magic": "done"}
+    )
 ```
 
+#### Send MQ with apm enabled
+
+```python
+import elasticapm
+apm_client = elasticapm.Client(
+      service_name="awesome-api-consumer",
+      server_url="https://apm-host",
+      secret_token="token",
+      environment="test",
+      service_version="2.0.0")
+
+# init sender with apm client
+uri = "https://username:password@rabbit-host/virtualhost"
+rabbit_sender = RabbitHttpSender(uri=uri)
+
+rabbit_sender.publish(
+      event_name="alian-found", # Must have a event name when using apm client
+      exchange_name="",
+      routing_key="target-queue-name",
+      message_body={"magic": "done"}
+    )
+
+rabbit_sender.publish(
+      event_name="alian-found", # Must have a event name when using apm client
+      exchange_name="exchange-1",
+      message_body={"magic": "done"}
+    )
+```
+
+#### Send MQ with FastAPI apm enabled
+
+```python
+from elasticapm.contrib.starlette import ElasticAPM, make_apm_client
+from fastapi import FastAPI
+
+apm_client = make_apm_client(
+    {
+        "SERVICE_NAME": "demo-api",
+        "SECRET_TOKEN": "xxxx",
+        "SERVER_URL": "https://apm-host",
+        "ENVIRONMENT": "test",
+        "SERVICE_VERSION": "1.0.0",
+    }
+)
+
+app = FastAPI()
+app.add_middleware(ElasticAPM, client=apm_client)
+
+# init sender with apm client
+uri = "https://username:password@rabbit-host/virtualhost"
+rabbit_sender = RabbitHttpSender(uri=uri, apm_client=apm_client)
+
+rabbit_sender.publish(
+      event_name="alian-found", # Must have a event name when using apm client
+      exchange_name="exchange-1",
+      message_body={"magic": "done"}
+    )
+```
 
 ## Progress Bar
 
@@ -260,7 +344,7 @@ A simple progress bar can display properly on k8s and Grafana.
 import logging
 from yodo1.progress import ProgressBar
 
-logging.basicConfig(level='DEBUG')
+logging.basicConfig(level="DEBUG")
 
 p = ProgressBar(total=100, desc="Hacking ...", step=5)
 
