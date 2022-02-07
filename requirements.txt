@@ -24,9 +24,6 @@ httpx[http2]
 pretty_errors>=1.2.20,<2
 colorlog>=6.6.0,<7
 
-# Cache
-cachetools>=4.2.2,<5
-
 # Retry
 tenacity
 
