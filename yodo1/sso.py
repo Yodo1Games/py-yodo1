@@ -4,7 +4,6 @@ from typing import Optional, List
 
 import jwt
 import requests
-from cachetools import cached, TTLCache
 from fastapi import HTTPException, Security, Request
 from fastapi.openapi.models import HTTPBearer as HTTPBearerModel
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -69,25 +68,36 @@ class JWTPayload(BaseModel):
 
 
 class JWTHelper:
-    def __init__(self) -> None:
+    def __init__(self, ttl_time: int = 3600) -> None:
         self.public_key: Optional[str] = None
         self.private_key: Optional[str] = None
         self.public_key_url: Optional[str] = None
         self.scope: Optional[str] = None
+        self._ttl_timedelta: timedelta = timedelta(seconds=ttl_time)
+        self._last_updated_at: Optional[datetime] = None
 
-    @cached(cache=TTLCache(maxsize=1024, ttl=1800))
     def _fetch_public_key(self, url: str) -> str:
+        now = datetime.now()
+        if self.public_key and self._is_not_expired(now):
+            return self.public_key
         try:
             response = requests.get(url)
             assert response.text.startswith('-----BEGIN PUBLIC KEY-----')
             self.public_key = response.text
-        except Exception:  # flake8: noqa
+            self._last_updated_at = now
+        except (Exception,):
             logging.error("Update public key from sso server failed.")
 
         if self.public_key is None:
             raise ValueError("No initial public key exists")
 
         return self.public_key
+
+    def _is_not_expired(self, now: datetime) -> bool:
+        if self._last_updated_at:
+            return now - self._last_updated_at < self._ttl_timedelta
+        else:
+            return False
 
     def setup_with_sso_server(self, url: str, scope: Optional[str] = None) -> None:
         self.public_key = self._fetch_public_key(url=url)
