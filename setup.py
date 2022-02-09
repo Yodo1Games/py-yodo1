@@ -10,7 +10,7 @@ with codecs.open('requirements.txt', 'r', 'utf8') as reader:
 
 setuptools.setup(
     name="yodo1-toolkit",
-    version="0.3.1",
+    version="0.3.2",
     author="Eliyar Eziz",
     author_email="eliyar@yodo1.com",
     description="A Yodo1 Python Toolbox",
