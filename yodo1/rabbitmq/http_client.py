@@ -45,7 +45,7 @@ class RabbitHttpSender:
 
         if 'amqp' in self.scheme:
             logger.warning("Please use http/https for rabbitmq HTTP sender.")
-            self.scheme.replace("amqp", "http")
+            self.scheme = "https" if self.scheme == 'amqps' else "http"
 
         self.host = uri_obj.hostname
         if uri_obj.port:
