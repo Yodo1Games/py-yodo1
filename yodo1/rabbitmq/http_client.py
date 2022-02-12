@@ -43,6 +43,10 @@ class RabbitHttpSender:
         self.global_max_retry = global_max_retry
         self.apm_client: elasticapm.Client = apm_client
 
+        if 'amqp' in self.scheme:
+            logger.warning("Please use http/https for rabbitmq HTTP sender.")
+            self.scheme.replace("amqp", "http")
+
         self.host = uri_obj.hostname
         if uri_obj.port:
             self.host = f'{uri_obj.hostname}:{uri_obj.port}'
@@ -61,7 +65,9 @@ class RabbitHttpSender:
         :param exchange_name:
         :return:
         """
-        uri = f"amqp://{self.username}:{self.password}@{self.hostname}/{self.virtual_host}"
+        mq_schema = "amqp" if self.scheme == "http" else "amqps"
+
+        uri = f"{mq_schema}://{self.username}:{self.password}@{self.hostname}/{self.virtual_host}"
         connect_params = pika.URLParameters(uri)
         connection = pika.BlockingConnection(connect_params)
         channel = connection.channel()
