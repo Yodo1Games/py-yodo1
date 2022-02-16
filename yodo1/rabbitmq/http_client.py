@@ -1,17 +1,20 @@
 import json
 import logging
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from urllib.parse import quote_plus, urlparse
 
 import elasticapm
 import httpx
-import pika
 from tenacity import AsyncRetrying, Retrying, stop_after_attempt, wait_random
 
 logger = logging.getLogger("yodo1.rabbitmq")
 
 
 class MQSendFailedException(Exception):
+    pass
+
+
+class MQExchangeDeclareFailedException(Exception):
     pass
 
 
@@ -57,27 +60,27 @@ class RabbitHttpSender:
         if self.apm_client:
             elasticapm.instrument()
 
-    def declare_exchange(self, exchange_name: str) -> None:
+    def declare_exchange(
+        self,
+        exchange_name: str,
+        exchange_type: str = "fanout",
+        arguments: Optional[Dict[Any, Any]] = None,
+    ) -> None:
         """
         Declare exchange on start up. We should declare exchange in the code.
         We use pika here for convinience,
-        :param queue_name:
-        :param exchange_name:
+        :param exchange_name: str
+        :param exchange_type: str
+        :param arguments: Custom key/value pair arguments for the exchange
         :return:
         """
-        mq_schema = "amqp" if self.scheme == "http" else "amqps"
+        url = f"{self.scheme}://{self.username}:{self.password}@{self.host}/api/exchanges/{quote_plus(self.virtual_host)}/{exchange_name}"
 
-        uri = f"{mq_schema}://{self.username}:{self.password}@{self.hostname}/{self.virtual_host}"
-        connect_params = pika.URLParameters(uri)
-        connection = pika.BlockingConnection(connect_params)
-        channel = connection.channel()
-
-        channel.exchange_declare(
-            exchange=exchange_name, exchange_type="fanout", durable=True
-        )
+        body = {"type": exchange_type, "durable": True, "arguments": arguments or {}}
+        res = self.sync_httpx_client.put(url=url, json=body)
+        if res.status_code not in (201, 204):
+            raise MQExchangeDeclareFailedException(res.text)
         logger.info(f"Exchange {exchange_name} declared")
-        channel.close()
-        connection.close()
 
     def publish(
         self,
