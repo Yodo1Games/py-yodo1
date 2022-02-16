@@ -6,7 +6,7 @@ import random
 import socket
 import string
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Callable
+from typing import Callable, Optional, Dict, Any
 
 import elasticapm
 import pika
@@ -75,8 +75,9 @@ class MultiThreadConsumer:
         queue_name: str,
         *,
         handler_function: Callable,
-        exchange_name: str = None,
-        consumer_tag: str = None,
+        exchange_name: Optional[str] = None,
+        consumer_tag: Optional[str] = None,
+        queue_arguments: Optional[Dict[Any, Any]] = None
     ) -> None:
         """
         Setup queue's callback function
@@ -84,9 +85,10 @@ class MultiThreadConsumer:
         :param handler_function: target callback function
         :param exchange_name: optional, exchange that needs to blind to the queue
         :param consumer_tag: optional, human-readable tag. default value is `{host_name}-{pid}-{random-string}`
+        :param queue_arguments: optional, Custom key/value arguments for the queue
         :return: None
         """
-        self.channel.queue_declare(queue_name, durable=True)
+        self.channel.queue_declare(queue_name, durable=True, arguments=queue_arguments)
         if exchange_name is not None:
             self.channel.queue_bind(queue_name, exchange=exchange_name, routing_key="")
 
