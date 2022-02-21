@@ -5,12 +5,16 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+# Read version from file.
+with open("__version__.txt", "r", encoding="utf-8") as f:
+    version = f.read().splitlines()[-1]
+
 with codecs.open('requirements.txt', 'r', 'utf8') as reader:
     install_requires = list(map(lambda x: x.strip(), reader.readlines()))
 
 setuptools.setup(
     name="yodo1-toolkit",
-    version="0.3.3",
+    version=version,
     author="Eliyar Eziz",
     author_email="eliyar@yodo1.com",
     description="A Yodo1 Python Toolbox",
