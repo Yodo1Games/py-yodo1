@@ -50,8 +50,8 @@ jobs:
       id: release_version
       run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
 
-    - name: Update __version__.txt file
-      run: echo ${{ steps.release_version.outputs.VERSION }} > __version__.txt
+    - name: Update __version__.py file
+      run: echo "__version__ = '${{ steps.release_version.outputs.VERSION }}'" > yodo1/__version__.py
 
     - name: Build package
       run: python -m build

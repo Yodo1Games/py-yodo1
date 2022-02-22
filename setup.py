@@ -1,20 +1,30 @@
 import codecs
-
+import pathlib
 import setuptools
+import re
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
-# Read version from file.
-with open("__version__.txt", "r", encoding="utf-8") as f:
-    version = f.read().splitlines()[-1]
+
+def get_version() -> str:
+    # Read version from file.
+    version_file = pathlib.Path(__file__).parent.resolve() / "yodo1" / "__version__.py"
+    with open(version_file, "r", encoding="utf-8") as f:
+        version_file = f.read()
+        version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                                  version_file, re.M)
+        if version_match:
+            return version_match.group(1)
+        raise RuntimeError("Unable to find version string.")
+
 
 with codecs.open('requirements.txt', 'r', 'utf8') as reader:
     install_requires = list(map(lambda x: x.strip(), reader.readlines()))
 
 setuptools.setup(
     name="yodo1-toolkit",
-    version=version,
+    version=get_version(),
     author="Eliyar Eziz",
     author_email="eliyar@yodo1.com",
     description="A Yodo1 Python Toolbox",
