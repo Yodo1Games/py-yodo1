@@ -77,7 +77,7 @@ class DBManager:
         db = None
         try:
             db = self.SessionLocal()
-            yield db
+            yield db  # type: ignore
         finally:
             if db:
                 db.close()
