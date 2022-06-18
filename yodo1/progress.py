@@ -17,12 +17,12 @@ class ProgressBar:
         self._start_at: float = 0
 
     def _format_time(self, secs: float) -> str:
-        m, s = divmod(secs, 60)
+        m, s = divmod(int(secs), 60)
         h, m = divmod(m, 60)
         if h == 0:
-            return f'{m:02d}:{s:02d}'
+            return f'{m:02.0f}:{s:02.0f}'
         else:
-            return f'{h:d}:{m:02d}:{s:02d}'
+            return f'{h:d}:{m:02.0f}:{s:02.0f}'
 
     def _get_time_string(self) -> str:
         # Fix crash when index == 0
