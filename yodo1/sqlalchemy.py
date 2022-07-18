@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict, Any, List, TypeVar, Type, Generator
+from typing import Dict, Any, List, TypeVar, Type, Iterator
 
 from sqlalchemy import Column, DateTime
 from sqlalchemy.ext.compiler import compiles
@@ -73,7 +73,7 @@ class DBManager:
         self.engine = engine
         self._SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-    def get_session(self) -> Generator[None, Session, None]:
+    def get_session(self) -> Iterator[Session]:
         db = None
         try:
             db = self.SessionLocal()
