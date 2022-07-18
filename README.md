@@ -1,5 +1,11 @@
 # Yodo1 Python Toolkit
 
+<p align="center">
+  <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/yodo1-toolkit">
+  <img alt="PyPI" src="https://img.shields.io/pypi/v/yodo1-toolkit">
+  <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/yodo1-toolkit">
+</p>
+
 - [Yodo1 Python Toolkit](#yodo1-python-toolkit)
   - [Install](#install)
   - [SSO](#sso)
