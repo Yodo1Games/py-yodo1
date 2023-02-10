@@ -25,7 +25,7 @@ pretty_errors>=1.2.20,<2
 colorlog>=6.6.0,<7
 
 # Retry
-tenacity
+tenacity==8.1.0
 
 # Types
 types-aiofiles
